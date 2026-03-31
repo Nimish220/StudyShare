@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudyShare</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+
+    <header>
+        <div class="container">
+            <div class="logo">
+                <i class="fa-solid fa-book-open"></i> StudyShare
+            </div>
+            <p class="tagline">Share knowledge, freely and openly</p>
+        </div>
+    </header>
+
+    <div class="container main-content">
+        
+        <section class="card">
+            <h2>Upload Materials</h2>
+            <p class="subtext">Share your study materials with the community. No sign-up required.</p>
+            
+            <div class="upload-box" id="drop-zone">
+                <h3>Upload Study Materials</h3>
+                <p class="small-text">Supported formats: PDF, DOCX, JPG, PNG, WEBP • Maximum size: 40 MB</p>
+                
+                <div class="drop-area">
+                    <i class="fa-solid fa-arrow-up-from-bracket upload-icon"></i>
+                    <p>Drag and drop your file here, or click to browse</p>
+                    <p class="file-types">PDF, DOCX, or image files up to 40 MB</p>
+                    <input type="file" id="fileInput" hidden>
+                    <button class="btn" onclick="document.getElementById('fileInput').click()">Browse Files</button>
+                </div>
+                <div id="upload-status"></div>
+            </div>
+        </section>
+
+        <section class="card">
+            <h2>Browse Materials</h2>
+            <p class="subtext">Download and preview study materials shared by others.</p>
+
+            <div class="browse-box">
+                <h3>Available Materials</h3>
+                <p class="small-text">Search and filter to find the materials you need</p>
+
+                <div class="search-bar">
+                    <div class="input-group">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" id="searchInput" placeholder="Search by filename...">
+                    </div>
+                    <select id="typeFilter">
+                        <option value="all">All Types</option>
+                        <option value="pdf">PDF</option>
+                        <option value="docx">DOCX</option>
+                        <option value="image">Images</option>
+                    </select>
+                </div>
+
+                <div id="file-list" class="file-list">
+                    <div class="empty-state">
+                        <i class="fa-regular fa-file"></i>
+                        <p>Loading files...</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="card contact-card">
+            <h3><i class="fa-solid fa-circle-exclamation"></i> Contact Us / Report a Problem</h3>
+            <p>Found an issue or have a question? We're here to help.</p>
+            <p>If you encounter any problems with uploads, downloads, or have questions about the platform, please reach out to us:</p>
+            
+            <div class="contact-row">
+                <div class="email-info">
+                    <i class="fa-regular fa-envelope"></i> <strong>nimish.d.joshi27@gmail.com</strong>
+                </div>
+                <a href="mailto:nimish.d.joshi27@gmail.com" class="btn-outline">
+                    <i class="fa-regular fa-envelope"></i> Send Email
+                </a>
+            </div>
+        </section>
+
+    </div>
+
+    <footer>
+        <p>&copy; 2026. Built with love using caffeine.ai</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
