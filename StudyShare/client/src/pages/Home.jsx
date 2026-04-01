@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import './App.css'; // Make sure your original CSS is pasted in App.css
+import '../App.css'; // Make sure your original CSS is pasted in App.css
 
-function App() {
+function Home() {
   // --- 1. State Management (Replacing global JS variables) ---
   const [materials, setMaterials] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -198,4 +198,4 @@ function App() {
   );
 }
 
-export default App;
+export default Home;
