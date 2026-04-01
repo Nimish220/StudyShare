@@ -1,13 +1,6 @@
-import React from 'react';
-import { 
-  LayoutDashboard, Users, BarChart3, Settings, 
-  Bell, Search, LogOut, TrendingUp, UserPlus, 
-  Activity, ArrowUpRight 
-} from 'lucide-react';
-import { 
-  LineChart, Line, XAxis, YAxis, CartesianGrid, 
-  Tooltip, ResponsiveContainer, AreaChart, Area 
-} from 'recharts';
+import React, { useState } from 'react';
+import { LayoutDashboard, Users, BarChart3, Settings, Bell, Search, LogOut } from 'lucide-react';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 const data = [
   { name: 'Mon', visits: 400 }, { name: 'Tue', visits: 700 },
@@ -16,163 +9,159 @@ const data = [
 ];
 
 const AdminDashboard = () => {
-  return (
-    <div className="flex min-h-screen bg-[#f1f5f9] font-sans text-slate-900 selection:bg-blue-100">
-      
-      {/* --- SIDEBAR --- */}
-      <aside className="w-72 bg-[#0f172a] text-white hidden lg:flex flex-col fixed h-full shadow-2xl z-30">
-        <div className="p-8">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
-              <Activity className="text-white" size={24} />
-            </div>
-            <div>
-              <h1 className="text-xl font-black tracking-tight">StudyShare</h1>
-              <span className="text-blue-400 text-[10px] uppercase font-bold tracking-widest">Admin Portal</span>
-            </div>
-          </div>
-        </div>
+  // State to manage active sidebar item and notification toggle
+  const [activeTab, setActiveTab] = useState('Dashboard');
 
-        <nav className="flex-1 px-4 space-y-2">
-          <NavItem icon={<LayoutDashboard size={20}/>} label="Dashboard" active />
-          <NavItem icon={<Users size={20}/>} label="User Directory" />
-          <NavItem icon={<BarChart3 size={20}/>} label="Performance" />
-          <NavItem icon={<Settings size={20}/>} label="System Settings" />
+  const handleNotificationClick = () => {
+    alert("You have 3 new file upload requests to approve.");
+  };
+
+  const handleLogout = () => {
+    if (window.confirm("Are you sure you want to logout?")) {
+      console.log("Logged out");
+    }
+  };
+
+  return (
+    <div className="flex min-h-screen bg-[#fdfaf9] font-sans text-[#3d2b1f]">
+      
+      {/* SIDEBAR - Deep Brown Theme */}
+      <aside className="w-64 bg-[#3d2b1f] text-white hidden md:flex flex-col fixed h-full shadow-2xl z-20">
+        <div className="p-6 text-2xl font-bold border-b border-[#5c4033] tracking-tight">
+          <span className="text-[#d2b48c]">Study</span>Share 
+          <span className="text-white/50 text-xs block font-normal mt-1 uppercase tracking-widest">Management</span>
+        </div>
+        
+        <nav className="flex-1 p-4 space-y-2">
+          <NavItem 
+            icon={<LayoutDashboard size={20}/>} 
+            label="Dashboard" 
+            active={activeTab === 'Dashboard'} 
+            onClick={() => setActiveTab('Dashboard')}
+          />
+          <NavItem 
+            icon={<Users size={20}/>} 
+            label="Users" 
+            active={activeTab === 'Users'} 
+            onClick={() => setActiveTab('Users')}
+          />
+          <NavItem 
+            icon={<BarChart3 size={20}/>} 
+            label="Analytics" 
+            active={activeTab === 'Analytics'} 
+            onClick={() => setActiveTab('Analytics')}
+          />
+          <NavItem 
+            icon={<Settings size={20}/>} 
+            label="Settings" 
+            active={activeTab === 'Settings'} 
+            onClick={() => setActiveTab('Settings')}
+          />
         </nav>
 
-        <div className="p-6">
-          <div className="bg-slate-800/50 rounded-2xl p-4 border border-slate-700/50">
-            <p className="text-xs text-slate-400 mb-2">Logged in as</p>
-            <p className="text-sm font-bold">Ronak Malpani</p>
-            <button className="mt-3 flex items-center gap-2 text-xs text-red-400 hover:text-red-300 transition-colors">
-              <LogOut size={14}/> Sign Out
-            </button>
-          </div>
+        <div className="p-4 border-t border-[#5c4033]">
+          <button 
+            onClick={handleLogout}
+            className="flex items-center gap-3 p-3 w-full text-white/70 hover:text-white hover:bg-red-900/30 rounded-xl transition-all duration-300"
+          >
+            <LogOut size={18}/> <span className="text-sm font-semibold">Logout System</span>
+          </button>
         </div>
       </aside>
 
-      {/* --- MAIN CONTENT --- */}
-      <main className="flex-1 lg:ml-72 transition-all">
+      {/* MAIN CONTENT */}
+      <main className="flex-1 md:ml-64">
         
-        {/* HEADER */}
-        <header className="h-20 bg-white/80 backdrop-blur-md border-b border-slate-200 flex items-center justify-between px-10 sticky top-0 z-20">
-          <div className="relative group">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={18} />
+        {/* HEADER - Glassmorphism style */}
+        <header className="h-16 bg-white/80 backdrop-blur-md border-b border-[#eaddd3] flex items-center justify-between px-8 sticky top-0 z-10">
+          <div className="relative w-72 group">
+            <Search className="absolute left-3 top-2.5 text-[#8b5e3c]" size={16} />
             <input 
               type="text" 
-              placeholder="Quick search (Ctrl + K)" 
-              className="w-80 pl-11 pr-4 py-2.5 bg-slate-100/50 border-transparent border focus:border-blue-500/20 focus:bg-white rounded-xl text-sm outline-none transition-all" 
+              placeholder="Search materials..." 
+              className="w-full pl-10 pr-4 py-2 bg-[#f5ebe0] border-transparent focus:border-[#8b5e3c] border rounded-xl text-sm outline-none transition-all" 
             />
           </div>
 
-          <div className="flex items-center gap-6">
-            <div className="relative p-2.5 text-slate-500 hover:bg-slate-100 rounded-xl cursor-pointer transition-all">
-              <Bell size={20} />
-              <span className="absolute top-2.5 right-2.5 w-2.5 h-2.5 bg-blue-600 rounded-full border-2 border-white"></span>
-            </div>
-            <div className="h-10 w-[1px] bg-slate-200"></div>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-md flex items-center justify-center text-white font-bold">RM</div>
+          <div className="flex items-center gap-5">
+            {/* Clickable Notification */}
+            <button 
+              onClick={handleNotificationClick}
+              className="p-2 text-[#8b5e3c] hover:bg-[#f5ebe0] rounded-full relative transition-colors group"
+            >
+              <Bell size={22} className="group-active:scale-90 transition-transform" />
+              <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-[#a67c52] rounded-full border-2 border-white"></span>
+            </button>
+            
+            <div className="flex items-center gap-3 pl-4 border-l border-[#eaddd3]">
+              <div className="text-right hidden sm:block">
+                <p className="text-xs font-bold text-[#3d2b1f]">Ronak Malpani</p>
+                <p className="text-[10px] text-[#8b5e3c] font-medium">Administrator</p>
+              </div>
+              <div className="w-10 h-10 bg-[#8b5e3c] rounded-xl flex items-center justify-center text-white font-bold shadow-lg shadow-[#8b5e3c]/20">
+                RM
+              </div>
             </div>
           </div>
         </header>
 
-        {/* PAGE BODY */}
-        <div className="p-10 max-w-[1600px] mx-auto">
-          <div className="flex justify-between items-end mb-10">
+        {/* DASHBOARD CONTENT */}
+        <div className="p-8">
+          <div className="mb-8 flex justify-between items-center">
             <div>
-              <h2 className="text-3xl font-bold text-slate-800 tracking-tight">System Overview</h2>
-              <p className="text-slate-500 mt-1">Real-time platform metrics and user activity.</p>
+              <h1 className="text-3xl font-black text-[#3d2b1f] tracking-tight">Dashboard Overview</h1>
+              <p className="text-[#8b5e3c] text-sm">Welcome back, manager. Here is the latest activity.</p>
             </div>
-            <button className="bg-white border border-slate-200 px-5 py-2.5 rounded-xl text-sm font-bold shadow-sm hover:shadow-md transition-all flex items-center gap-2">
-              <ArrowUpRight size={16}/> Export Data
+            <button className="bg-[#8b5e3c] text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-[#8b5e3c]/20 hover:bg-[#704c31] transition-all">
+              Generate Report
             </button>
           </div>
           
-          {/* STATS GRID */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
-            <StatCard 
-              title="Revenue" 
-              value="₹45,231" 
-              trend="+12.5%" 
-              icon={<TrendingUp className="text-emerald-500" />} 
-              color="emerald"
-            />
-            <StatCard 
-              title="New Students" 
-              value="1,284" 
-              trend="+8.2%" 
-              icon={<UserPlus className="text-blue-500" />} 
-              color="blue"
-            />
-            <StatCard 
-              title="Server Uptime" 
-              value="99.9%" 
-              trend="Stable" 
-              icon={<Activity className="text-amber-500" />} 
-              color="amber"
-            />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+            <StatCard title="Total Revenue" value="₹45,231" trend="+12.5%" />
+            <StatCard title="New Registrations" value="154" trend="+5.2%" />
+            <StatCard title="Active Materials" value="1,042" trend="+18%" />
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-            {/* ENHANCED CHART */}
-            <div className="lg:col-span-2 bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
-              <div className="flex justify-between items-center mb-8">
-                <h3 className="font-bold text-lg">Traffic Insights</h3>
-                <select className="text-xs font-bold bg-slate-50 border-none rounded-lg p-2 outline-none">
-                  <option>Last 7 Days</option>
-                  <option>Last 30 Days</option>
-                </select>
-              </div>
-              <div className="h-[350px]">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* CHART */}
+            <div className="lg:col-span-2 bg-white p-8 rounded-3xl border border-[#eaddd3] shadow-sm">
+              <h3 className="font-bold text-lg mb-6 flex items-center gap-2">
+                <div className="w-1 h-5 bg-[#8b5e3c] rounded-full"></div>
+                Monthly Traffic Analysis
+              </h3>
+              <div className="h-72">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={data}>
                     <defs>
                       <linearGradient id="colorVisits" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1}/>
-                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                        <stop offset="5%" stopColor="#8b5e3c" stopOpacity={0.1}/>
+                        <stop offset="95%" stopColor="#8b5e3c" stopOpacity={0}/>
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                    <XAxis 
-                      dataKey="name" 
-                      axisLine={false} 
-                      tickLine={false} 
-                      tick={{fill: '#94a3b8', fontSize: 12, fontWeight: 600}} 
-                      dy={10}
-                    />
-                    <YAxis 
-                      axisLine={false} 
-                      tickLine={false} 
-                      tick={{fill: '#94a3b8', fontSize: 12}} 
-                    />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f5ebe0" />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#8b5e3c', fontSize: 12}} />
+                    <YAxis axisLine={false} tickLine={false} tick={{fill: '#8b5e3c', fontSize: 12}} />
                     <Tooltip 
-                      contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
+                       contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)'}} 
                     />
-                    <Area 
-                      type="monotone" 
-                      dataKey="visits" 
-                      stroke="#3b82f6" 
-                      strokeWidth={4} 
-                      fillOpacity={1} 
-                      fill="url(#colorVisits)" 
-                    />
+                    <Area type="monotone" dataKey="visits" stroke="#8b5e3c" strokeWidth={3} fill="url(#colorVisits)" />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
             </div>
 
-            {/* RECENT ACTIVITY */}
-            <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
-              <h3 className="font-bold text-lg mb-6">Live Users</h3>
-              <div className="space-y-6">
-                <UserItem name="Aryan Kulkarni" email="aryan.k@mitwpu.edu" status="Active" />
-                <UserItem name="Sneha Patil" email="sneha.p@mitwpu.edu" status="Pending" />
-                <UserItem name="Rahul Mehta" email="r.mehta@mitwpu.edu" status="Active" />
-                <UserItem name="Priya Singh" email="priya.s@mitwpu.edu" status="Inactive" />
+            {/* RECENT USERS */}
+            <div className="bg-white p-8 rounded-3xl border border-[#eaddd3] shadow-sm">
+              <h3 className="font-bold text-lg mb-6">Pending Approvals</h3>
+              <div className="space-y-5">
+                <UserItem name="Aryan K." status="Active" time="2 mins ago" />
+                <UserItem name="Sneha P." status="Pending" time="15 mins ago" />
+                <UserItem name="Rahul M." status="Active" time="1 hour ago" />
+                <UserItem name="Priya S." status="Inactive" time="3 hours ago" />
               </div>
-              <button className="w-full mt-8 py-3 rounded-xl bg-slate-50 text-slate-500 text-sm font-bold hover:bg-slate-100 transition-all">
-                View All Users
+              <button className="w-full mt-6 py-3 rounded-xl bg-[#f5ebe0] text-[#8b5e3c] text-sm font-bold hover:bg-[#eaddd3] transition-all">
+                View All Activity
               </button>
             </div>
           </div>
@@ -182,64 +171,50 @@ const AdminDashboard = () => {
   );
 };
 
-// --- ENHANCED UI COMPONENTS ---
-
-const NavItem = ({ icon, label, active }) => (
-  <div className={`
-    flex items-center gap-3.5 px-4 py-3.5 rounded-xl cursor-pointer transition-all duration-300 group
-    ${active ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}
-  `}>
-    <span className={`${active ? 'text-white' : 'group-hover:text-blue-400'} transition-colors`}>{icon}</span>
+// HELPER COMPONENTS
+const NavItem = ({ icon, label, active, onClick }) => (
+  <div 
+    onClick={onClick}
+    className={`flex items-center gap-4 p-3.5 rounded-xl cursor-pointer transition-all duration-300 group
+    ${active 
+      ? 'bg-[#8b5e3c] text-white shadow-xl shadow-black/20 translate-x-1' 
+      : 'text-white/60 hover:text-white hover:bg-white/10'}`}
+  >
+    <div className={`${active ? 'text-white' : 'text-[#8b5e3c] group-hover:text-white'} transition-colors`}>
+      {icon}
+    </div>
     <span className="text-sm font-bold tracking-wide">{label}</span>
   </div>
 );
 
-const StatCard = ({ title, value, trend, icon, color }) => {
-  const colors = {
-    emerald: 'bg-emerald-50 text-emerald-600',
-    blue: 'bg-blue-50 text-blue-600',
-    amber: 'bg-amber-50 text-amber-600'
-  };
-
-  return (
-    <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-      <div className="flex justify-between items-start mb-4">
-        <div className={`p-3 rounded-2xl ${colors[color]}`}>
-          {icon}
-        </div>
-        <span className={`text-xs font-black px-2.5 py-1 rounded-lg ${trend.includes('+') ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-600'}`}>
-          {trend}
-        </span>
-      </div>
-      <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">{title}</p>
-      <h2 className="text-3xl font-black text-slate-800 mt-1">{value}</h2>
-    </div>
-  );
-};
-
-const UserItem = ({ name, email, status }) => {
-  const statusStyles = {
-    Active: 'bg-emerald-100 text-emerald-600',
-    Pending: 'bg-amber-100 text-amber-600',
-    Inactive: 'bg-slate-100 text-slate-500'
-  };
-
-  return (
-    <div className="flex items-center justify-between group">
-      <div className="flex items-center gap-4">
-        <div className="w-11 h-11 bg-slate-100 rounded-xl flex items-center justify-center text-slate-500 font-bold group-hover:bg-blue-600 group-hover:text-white transition-all duration-300">
-          {name[0]}
-        </div>
-        <div>
-          <p className="text-sm font-bold text-slate-800">{name}</p>
-          <p className="text-[11px] text-slate-400 font-medium">{email}</p>
-        </div>
-      </div>
-      <span className={`text-[10px] font-black px-2.5 py-1 rounded-lg uppercase tracking-tighter ${statusStyles[status]}`}>
-        {status}
+const StatCard = ({ title, value, trend }) => (
+  <div className="bg-white p-8 rounded-3xl border border-[#eaddd3] shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1">
+    <p className="text-[#8b5e3c] text-xs font-black uppercase tracking-widest">{title}</p>
+    <div className="flex items-end justify-between mt-3">
+      <h2 className="text-3xl font-black text-[#3d2b1f]">{value}</h2>
+      <span className="bg-[#f5ebe0] text-[#8b5e3c] px-2.5 py-1 rounded-lg text-[10px] font-black">
+        {trend}
       </span>
     </div>
-  );
-};
+  </div>
+);
+
+const UserItem = ({ name, status, time }) => (
+  <div className="flex items-center justify-between group cursor-pointer">
+    <div className="flex items-center gap-4">
+      <div className="w-10 h-10 bg-[#f5ebe0] text-[#8b5e3c] rounded-xl flex items-center justify-center font-bold group-hover:bg-[#8b5e3c] group-hover:text-white transition-all">
+        {name[0]}
+      </div>
+      <div>
+        <p className="text-sm font-bold text-[#3d2b1f]">{name}</p>
+        <p className="text-[10px] text-[#8b5e3c] font-medium">{time}</p>
+      </div>
+    </div>
+    <span className={`text-[9px] font-black px-2 py-0.5 rounded-md uppercase tracking-tighter shadow-sm
+      ${status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-[#eaddd3] text-[#8b5e3c]'}`}>
+      {status}
+    </span>
+  </div>
+);
 
 export default AdminDashboard;
