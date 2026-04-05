@@ -96,3 +96,46 @@ exports.getMyMaterials = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
+// materialController.js
+
+exports.toggleBookmark = async (req, res) => {
+    try {
+        const { material_id } = req.body;
+        const user_id = req.user.id;
+
+        // Check if already bookmarked
+        const [existing] = await db.query(
+            "SELECT * FROM bookmarks WHERE user_id = ? AND material_id = ?",
+            [user_id, material_id]
+        );
+
+        if (existing.length > 0) {
+            // Remove bookmark
+            await db.query("DELETE FROM bookmarks WHERE user_id = ? AND material_id = ?", [user_id, material_id]);
+            return res.json({ message: "Bookmark removed", isBookmarked: false });
+        } else {
+            // Add bookmark
+            await db.query("INSERT INTO bookmarks (user_id, material_id) VALUES (?, ?)", [user_id, material_id]);
+            return res.json({ message: "Bookmarked successfully", isBookmarked: true });
+        }
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+exports.getUserBookmarks = async (req, res) => {
+    try {
+        const user_id = req.user.id;
+        const sql = `
+            SELECT m.*, u.username as author, 1 as isBookmarked
+            FROM materials m
+            JOIN bookmarks b ON m.id = b.material_id
+            JOIN users u ON m.uploader_id = u.id
+            WHERE b.user_id = ?
+        `;
+        const [bookmarks] = await db.query(sql, [user_id]);
+        res.json(bookmarks);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};

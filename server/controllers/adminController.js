@@ -51,3 +51,13 @@ exports.approveMaterial = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
+exports.deleteMaterial = async (req, res) => {
+    try {
+        const { id } = req.params;
+        // Optional: you could also delete the actual file from the /uploads folder here
+        await db.query('DELETE FROM materials WHERE id = ?', [id]);
+        res.json({ message: "Material removed successfully" });
+    } catch (err) {
+        res.status(500).json({ error: "Database error during deletion" });
+    }
+};

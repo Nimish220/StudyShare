@@ -54,14 +54,19 @@ const AdminDashboard = () => {
     window.open(`http://localhost:5001/${fileUrl}`, '_blank');
   };
 
+  // AdminDashboard.jsx
+
   const handleRemove = async (id) => {
     if (window.confirm("Are you sure you want to remove this content?")) {
       try {
-        // You'll need to create this DELETE route in your backend
+        // Ensure this URL matches: http://localhost:5001/api/admin/material/:id
         await axios.delete(`${API_BASE}/material/${id}`, { headers });
-        fetchDashboardData();
+        
+        alert("Material removed successfully!");
+        fetchDashboardData(); // Refresh the list
       } catch (err) {
-        alert("Error removing material");
+        console.error("Delete Error:", err.response?.data || err.message);
+        alert("Error removing material: " + (err.response?.data?.error || "Server Error"));
       }
     }
   };

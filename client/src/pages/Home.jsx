@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { materials, categories } from '../constants';
 
 const Home = () => {
-  // Get the first 8 materials for the "Popular" section as per initHome()
+  // Get the first 8 materials for the "Popular" section
   const featuredMaterials = materials.slice(0, 8);
   // Get categories (excluding "All") for the category pills section
   const homeCategories = categories.filter(c => c !== 'All');
@@ -51,14 +51,16 @@ const Home = () => {
                 </div>
                 <div className="card-title">{m.title}</div>
                 <p className="card-author">by {m.author}</p>
-                <div className="card-meta">
-                  <span className="card-meta-item">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                <div className="card-meta" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px' }}>
+                  <span className="card-meta-item" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                     {m.downloads}
                   </span>
-                  <span className="card-meta-item">
-                    <svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1" style={{ opacity: 0.6, color: 'var(--primary)' }}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                    {m.rating.toFixed(1)}
+                  
+                  {/* UPDATED RATING LOGIC: Matches ExplorePage behavior */}
+                  <span className="card-meta-item" style={{ display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 'bold', color: '#f1c40f' }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    {m.rating > 0 ? m.rating.toFixed(1) : 'New'}
                   </span>
                 </div>
               </a>

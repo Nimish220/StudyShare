@@ -8,5 +8,5 @@ router.get('/stats', verifyToken, isAdmin, adminController.getAdminStats);
 router.get('/pending', verifyToken, isAdmin, adminController.getPendingMaterials);
 router.get('/users', verifyToken, isAdmin, adminController.getAllUsers);
 router.put('/approve/:id', verifyToken, isAdmin, adminController.approveMaterial);
-
+router.delete('/material/:id', verifyToken, isAdmin, adminController.deleteMaterial);
 module.exports = router;

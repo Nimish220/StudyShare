@@ -17,4 +17,7 @@ router.get('/:id/reviews', reviewController.getMaterialReviews);
 
 // Protected route to post a review
 router.post('/rate', verifyToken, reviewController.addReview);
+
+router.post('/bookmark', verifyToken, materialController.toggleBookmark); 
+router.get('/bookmarks', verifyToken, materialController.getUserBookmarks);
 module.exports = router;
