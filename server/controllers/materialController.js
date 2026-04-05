@@ -44,24 +44,25 @@ exports.getApprovedMaterials = async (req, res) => {
     }
 };
 
+const { logAction } = require('./superAdminController'); // Import the helper
+
 exports.uploadMaterial = async (req, res) => {
     try {
         const { title, description, category } = req.body;
         const uploader_id = req.user.id; 
         const file_url = req.file.path;  
 
-        // Requirement: Default status is 'pending' for Admin Moderation [cite: 11, 18]
-        const sql = `
-            INSERT INTO materials (title, description, file_url, category, uploader_id) 
-            VALUES (?, ?, ?, ?, ?)
-        `;
+        // Fetching username manually ensures no 'undefined' in the logs
+        const [userRows] = await db.query("SELECT username FROM users WHERE id = ?", [uploader_id]);
+        const actualName = userRows[0]?.username || "A User";
 
+        const sql = `INSERT INTO materials (title, description, file_url, category, uploader_id) VALUES (?, ?, ?, ?, ?)`;
         await db.query(sql, [title, description, file_url, category, uploader_id]);
 
-        res.status(201).json({
-            message: "Success! Material uploaded and saved to database.",
-            details: { title, category, file_url }
-        });
+        // Successfully logs the REAL name
+        await logAction(`${actualName} uploaded a new material: "${title}"`);
+
+        res.status(201).json({ message: "Upload Successful" });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

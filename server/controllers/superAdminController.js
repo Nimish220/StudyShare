@@ -1,6 +1,6 @@
 const db = require('../config/db');
 
-// Helper to log actions to the database
+// Helper to log actions - Call this in other controllers too!
 const logAction = async (text, adminId = null) => {
     try {
         await db.query("INSERT INTO system_logs (action_text, admin_id) VALUES (?, ?)", [text, adminId]);
@@ -11,21 +11,18 @@ const logAction = async (text, adminId = null) => {
 
 exports.getSuperStats = async (req, res) => {
     try {
-        // 1. Fetch Totals
         const [userCount] = await db.query("SELECT COUNT(*) as total FROM users");
         const [adminCount] = await db.query("SELECT COUNT(*) as total FROM users WHERE role = 'admin'");
         const [materialCount] = await db.query("SELECT COUNT(*) as total FROM materials");
         const [downloadCount] = await db.query("SELECT SUM(download_count) as total FROM materials");
         
-        // 2. Fetch Recent Activity from the logs table
+        // Fetch the 6 most recent real events
         const [logs] = await db.query(`
             SELECT action_text as log_text, created_at as time_stamp 
             FROM system_logs 
-            ORDER BY created_at DESC 
-            LIMIT 6
+            ORDER BY created_at DESC LIMIT 6
         `);
 
-        // 3. Single Response
         res.json({
             totalUsers: userCount[0].total || 0,
             activeAdmins: adminCount[0].total || 0,
@@ -69,4 +66,8 @@ exports.runMaintenance = async (req, res) => {
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
+};
+module.exports = { 
+    ...exports, // keeps all your existing exports like getSuperStats
+    logAction 
 };
