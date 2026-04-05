@@ -13,29 +13,38 @@ const Login = () => {
     e.preventDefault();
 
     try {
-      // 1. Send real request to your Node.js backend
       const response = await axios.post('http://localhost:5001/api/auth/login', {
         email,
         password
       });
 
-      // 2. SAVE THE REAL TOKEN (Upload.jsx looks for this!)
+      // 1. SAVE THE REAL TOKEN
       localStorage.setItem('token', response.data.token);
 
-      // 3. Save user info for the UI/Navbar
+      // 2. USE THE ROLE FROM DATABASE (not the selectedRole state)
+      const dbRole = response.data.user.role; 
+      
       const userData = {
         name: response.data.user.username || email.split('@')[0],
         email: email,
-        role: selectedRole
+        role: dbRole // Always trust the DB role
       };
+      
       localStorage.setItem('studyshare_user', JSON.stringify(userData));
 
-      // 4. Redirect based on role
-      if (selectedRole === 'admin') navigate('/admin');
-      else navigate('/dashboard');
+      // 3. ROLE-BASED NAVIGATION
+      if (dbRole === 'superadmin') {
+        navigate('/superadmin');
+      } else if (dbRole === 'admin') {
+        navigate('/admin'); // Or '/admin-dashboard' depending on your route name
+      } else {
+        navigate('/dashboard');
+      }
+
+      // 4. Refresh to update the Navbar/Auth state
+      window.location.reload();
 
     } catch (err) {
-      // Show the actual error from your backend (e.g., "User not found")
       alert(err.response?.data?.message || "Login failed. Please check your credentials.");
     }
   };

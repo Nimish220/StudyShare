@@ -4,23 +4,22 @@ const jwt = require('jsonwebtoken');
 
 // Registration Logic
 exports.register = async (req, res) => {
-    const { username, email, password } = req.body;
+    // 1. Added 'role' to destructuring
+    const { username, email, password, role } = req.body;
 
     try {
-        // 1. Check if user already exists
         const [existingUser] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
         if (existingUser.length > 0) {
             return res.status(400).json({ message: "User already exists" });
         }
 
-        // 2. Encrypt Password (Requirement: Passwords must be encrypted )
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
-        // 3. Insert into MySQL 
+        // 2. Insert 'role' into MySQL. If role is not provided, it defaults to 'student'
         await db.query(
-            'INSERT INTO users (username, email, password) VALUES (?, ?, ?)',
-            [username, email, hashedPassword]
+            'INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, ?)',
+            [username, email, hashedPassword, role || 'student']
         );
 
         res.status(201).json({ message: "User registered successfully!" });
