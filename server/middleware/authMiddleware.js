@@ -26,6 +26,12 @@ const isAdmin = (req, res, next) => {
         return res.status(403).json({ message: "Access Denied: Admins only" });
     }
 };
-
+const isSuperAdmin = (req, res, next) => {
+    if (req.user && req.user.role === 'superadmin') {
+        next();
+    } else {
+        return res.status(403).json({ message: "Access Denied: Super Admin clearance required" });
+    }
+};
 // 3. Export them together as an object
-module.exports = { verifyToken, isAdmin };
+module.exports = { verifyToken, isAdmin, isSuperAdmin };

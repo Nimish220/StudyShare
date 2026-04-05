@@ -17,7 +17,7 @@ const materialController = require('./controllers/materialController');
 const { verifyToken } = require('./middleware/authMiddleware');
 const upload = require('./middleware/uploadMiddleware');
 const materialRoutes = require('./routes/materialRoutes');
-
+const superAdminRoutes = require('./routes/superAdminRoutes');
 app.use('/api/materials', materialRoutes);
 // Workflow: Login -> Verify Token -> Save File -> Save Metadata
 app.post(
@@ -26,6 +26,7 @@ app.post(
     upload.single('materialFile'),     // 2. Save file to /uploads
     materialController.uploadMaterial  // 3. Save details to MySQL
 );
+app.use('/api/super', superAdminRoutes);
 
 // Test Route
 app.get('/', (req, res) => {
