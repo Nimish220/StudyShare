@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-
+import axios from 'axios';
 const Login = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
@@ -9,36 +9,35 @@ const Login = () => {
   // State to toggle password visibility
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
 
-    // 1. Create a lookup for the specific names from your project requirements
-    const USERS_DB = {
-      'admin@test.com': 'Anonymous',
-      'user@test.com': 'User123',
-      'superadmin@test.com': 'SuperAdmin'
-    };
+    try {
+      // 1. Send real request to your Node.js backend
+      const response = await axios.post('http://localhost:5001/api/auth/login', {
+        email,
+        password
+      });
 
-    // 2. Find the name based on the email entered
-    // If the email isn't in our list, it falls back to the email prefix
-    const displayName = USERS_DB[email.toLowerCase()] || email.split('@')[0];
+      // 2. SAVE THE REAL TOKEN (Upload.jsx looks for this!)
+      localStorage.setItem('token', response.data.token);
 
-    const userData = {
-      name: displayName, // This is what the Navbar and Dashboard will show
-      email: email,
-      role: selectedRole
-    };
+      // 3. Save user info for the UI/Navbar
+      const userData = {
+        name: response.data.user.username || email.split('@')[0],
+        email: email,
+        role: selectedRole
+      };
+      localStorage.setItem('studyshare_user', JSON.stringify(userData));
 
-    // 3. Save to localStorage
-    localStorage.setItem('studyshare_user', JSON.stringify(userData));
+      // 4. Redirect based on role
+      if (selectedRole === 'admin') navigate('/admin');
+      else navigate('/dashboard');
 
-    // 4. Redirect based on role
-    if (selectedRole === 'admin') navigate('/admin');
-    else if (selectedRole === 'superadmin') navigate('/superadmin');
-    else navigate('/dashboard');
-    
-    // 5. Refresh to update the Navbar immediately
-    window.location.reload();
+    } catch (err) {
+      // Show the actual error from your backend (e.g., "User not found")
+      alert(err.response?.data?.message || "Login failed. Please check your credentials.");
+    }
   };
 
   return (

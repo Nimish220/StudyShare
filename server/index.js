@@ -12,6 +12,17 @@ app.use(express.json());
 
 
 app.use('/api/auth', authRoutes);
+const materialController = require('./controllers/materialController');
+const verifyToken = require('./middleware/authMiddleware');
+const upload = require('./middleware/uploadMiddleware');
+
+// Workflow: Login -> Verify Token -> Save File -> Save Metadata [cite: 37]
+app.post(
+    '/api/materials/upload', 
+    verifyToken,                   // 1. Check if user is logged in
+    upload.single('materialFile'),     // 2. Save file to /uploads
+    materialController.uploadMaterial  // 3. Save details to MySQL
+);
 
 // Test Route
 app.get('/', (req, res) => {
