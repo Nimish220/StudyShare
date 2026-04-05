@@ -46,7 +46,7 @@ exports.login = async (req, res) => {
             return res.status(400).json({ message: "Invalid credentials" });
         }
 
-        // 3. Generate JWT Token [cite: 14, 20]
+        // 3. Generate JWT Token
         const token = jwt.sign(
             { id: user.id, role: user.role },
             process.env.JWT_SECRET,

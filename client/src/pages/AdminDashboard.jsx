@@ -1,93 +1,118 @@
-import React, { useState } from 'react';
-import { materials, dummyUsers } from '../constants';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+
 const AdminDashboard = () => {
-  // State to manage tab switching
   const [activeTab, setActiveTab] = useState('tab-pending');
-  const [currentMaterials, setCurrentMaterials] = useState(materials);
+  const [currentMaterials, setCurrentMaterials] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [stats, setStats] = useState({
+    totalMaterials: 0,
+    totalUsers: 0,
+    totalDownloads: 0,
+    pendingReviews: 0
+  });
+
+  const token = localStorage.getItem('token');
+  const adminData = JSON.parse(localStorage.getItem('studyshare_user'));
+  const headers = { Authorization: `Bearer ${token}` };
+  const API_BASE = 'http://localhost:5001/api/admin';
+  const [approvedMaterials, setApprovedMaterials] = useState([]);
+  // Fetch all dashboard data
+  const fetchDashboardData = async () => {
+  try {
+    const [statsRes, pendingRes, usersRes, approvedRes] = await Promise.all([
+      axios.get(`${API_BASE}/stats`, { headers }),
+      axios.get(`${API_BASE}/pending`, { headers }),
+      axios.get(`${API_BASE}/users`, { headers }),
+      // You need to create this admin route to see ALL approved content
+      axios.get('http://localhost:5001/api/materials/explore', { headers }) 
+    ]);
+
+    setStats(statsRes.data);
+    setCurrentMaterials(pendingRes.data); // This stays for Pending tab
+    setUsers(usersRes.data);
+    setApprovedMaterials(approvedRes.data); // New state for Manage Content tab
+  } catch (err) {
+    console.error("Dashboard Fetch Error:", err);
+  }
+};
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, [activeTab]);
+
+  const handleApprove = async (id) => {
+    try {
+      await axios.put(`${API_BASE}/approve/${id}`, {}, { headers });
+      fetchDashboardData(); // Refresh list and stats
+    } catch (err) {
+      alert("Error approving material");
+    }
+  };
+
+  const handleView = (fileUrl) => {
+    window.open(`http://localhost:5001/${fileUrl}`, '_blank');
+  };
+
+  const handleRemove = async (id) => {
+    if (window.confirm("Are you sure you want to remove this content?")) {
+      try {
+        // You'll need to create this DELETE route in your backend
+        await axios.delete(`${API_BASE}/material/${id}`, { headers });
+        fetchDashboardData();
+      } catch (err) {
+        alert("Error removing material");
+      }
+    }
+  };
+
   return (
     <div className="page-wrapper">
       <main>
         <div className="container dashboard-page">
           <h1>Admin Dashboard</h1>
           <p className="subtitle">
-            Welcome, <span id="admin-name">Anonymous</span>. Manage content and users.
+            Welcome, <span style={{fontWeight: 'bold', color: 'var(--primary)'}}>
+              {adminData?.username || "Admin"}
+            </span>. Manage content and users. 
           </p>
 
-          {/* Stat Cards */}
+          {/* Dynamic Stat Cards */}
           <div className="stat-cards">
             <div className="stat-card">
-              <div className="icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
-                  <polyline points="14 2 14 8 20 8" />
-                </svg>
-              </div>
-              <div className="value">12,400</div>
-              <div className="label">Total Materials</div>
+              <div className="value">{stats.totalMaterials}</div>
+              <div className="label">Total Materials </div>
             </div>
-
             <div className="stat-card">
-              <div className="icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                  <circle cx="9" cy="7" r="4" />
-                  <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                </svg>
-              </div>
-              <div className="value">8,200</div>
-              <div className="label">Total Users</div>
+              <div className="value">{stats.totalUsers}</div>
+              <div className="label">Total Users </div>
             </div>
-
             <div className="stat-card">
-              <div className="icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                  <polyline points="7 10 12 15 17 10" />
-                  <line x1="12" y1="15" x2="12" y2="3" />
-                </svg>
-              </div>
-              <div className="value">95,000</div>
-              <div className="label">Total Downloads</div>
+              <div className="value">{stats.totalDownloads}</div>
+              <div className="label">Total Downloads </div>
             </div>
-
             <div className="stat-card">
-              <div className="icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-                  <line x1="12" y1="9" x2="12" y2="13" />
-                  <line x1="12" y1="17" x2="12.01" y2="17" />
-                </svg>
-              </div>
-              <div className="value">23</div>
-              <div className="label">Pending Reviews</div>
+              <div className="value" style={{ color: 'orange' }}>{stats.pendingReviews}</div>
+              <div className="label">Pending Reviews </div>
             </div>
           </div>
 
-          {/* Tabs */}
+          {/* Tabs Navigation */}
           <div className="tabs">
-            <button 
-              className={`tab ${activeTab === 'tab-pending' ? 'active' : ''}`}
-              onClick={() => setActiveTab('tab-pending')}
-            >
+            <button className={`tab ${activeTab === 'tab-pending' ? 'active' : ''}`} onClick={() => setActiveTab('tab-pending')}>
               Pending Approvals
             </button>
-            <button 
-              className={`tab ${activeTab === 'tab-content' ? 'active' : ''}`}
-              onClick={() => setActiveTab('tab-content')}
-            >
+            <button className={`tab ${activeTab === 'tab-content' ? 'active' : ''}`} onClick={() => setActiveTab('tab-content')}>
               Manage Content
             </button>
-            <button 
-              className={`tab ${activeTab === 'tab-users' ? 'active' : ''}`}
-              onClick={() => setActiveTab('tab-users')}
-            >
+            <button className={`tab ${activeTab === 'tab-users' ? 'active' : ''}`} onClick={() => setActiveTab('tab-users')}>
               Users
             </button>
           </div>
 
-        <div className="table-card">
+          <div className="table-card">
             <div className="table-wrapper">
+              
               {/* 1. PENDING APPROVALS TABLE */}
               {activeTab === 'tab-pending' && (
                 <table>
@@ -99,84 +124,68 @@ const AdminDashboard = () => {
                       <th style={{ textAlign: 'right' }}>Actions</th>
                     </tr>
                   </thead>
-                  <tbody id="pending-tbody">
-                    {currentMaterials.slice(0, 5).map((m) => (
+                  <tbody>
+                    {currentMaterials.length > 0 ? currentMaterials.map((m) => (
                       <tr key={m.id}>
                         <td><strong>{m.title}</strong></td>
                         <td style={{ color: 'var(--muted-foreground)' }}>{m.author}</td>
                         <td style={{ color: 'var(--muted-foreground)' }}>{m.category}</td>
                         <td>
                           <div className="actions-cell">
-                            <button className="btn btn-icon btn-ghost" style={{ color: 'var(--primary)' }}>
-                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                            <button className="btn btn-icon btn-ghost" style={{ color: 'var(--primary)' }} onClick={() => handleView(m.file_url)}>
+                              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                             </button>
-                            <button 
-                              className="btn btn-icon btn-ghost" 
-                              style={{ color: 'green' }}
-                              onClick={() => setCurrentMaterials(currentMaterials.filter(item => item.id !== m.id))}
-                            >
-                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg>
+                            <button className="btn btn-icon btn-ghost" style={{ color: 'green' }} onClick={() => handleApprove(m.id)}>
+                              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
                             </button>
                           </div>
                         </td>
                       </tr>
-                    ))}
+                    )) : <tr><td colSpan="4">No pending materials.</td></tr>}
                   </tbody>
                 </table>
               )}
 
-          {activeTab === 'tab-content' && (
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Title</th>
-                      <th>Author</th>
-                      <th>Downloads</th>
-                      <th>Rating</th>
-                      <th style={{ textAlign: 'right' }}>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody id="content-tbody">
-                    {currentMaterials.map((m) => (
-                      <tr key={m.id}>
-                        <td>{m.title}</td>
-                        <td style={{ color: 'var(--muted-foreground)' }}>{m.author}</td>
-                        <td style={{ color: 'var(--muted-foreground)' }}>{m.downloads}</td>
-                        <td style={{ color: 'var(--muted-foreground)' }}>{m.rating}</td>
-                        <td>
-                          <div className="actions-cell">
-                            <button className="btn btn-sm btn-outline">Edit</button>
-                            <button 
-                              className="btn btn-sm btn-destructive"
-                              onClick={() => setCurrentMaterials(currentMaterials.filter(item => item.id !== m.id))}
-                            >
-                              Remove
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
+              {/* 2. MANAGE CONTENT TABLE (Approved Materials) */}
+              {activeTab === 'tab-content' && (
+                  <table>
+                    <thead>
+                      <tr><th>Title</th><th>Author</th><th>Downloads</th><th style={{ textAlign: 'right' }}>Actions</th></tr>
+                    </thead>
+                    <tbody>
+                      {approvedMaterials.map((m) => ( // Use approvedMaterials here
+                        <tr key={m.id}>
+                          <td>{m.title}</td>
+                          <td>{m.author}</td>
+                          <td>{m.download_count}</td>
+                          <td style={{ textAlign: 'right' }}>
+                            <button className="btn btn-sm btn-destructive" onClick={() => handleRemove(m.id)}>Remove</button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              
 
-          {activeTab === 'tab-users' && (
+              {/* 3. USERS MANAGEMENT TABLE */}
+              {activeTab === 'tab-users' && (
                 <table>
                   <thead>
                     <tr>
                       <th>Name</th>
                       <th>Email</th>
-                      <th>Uploads</th>
+                      <th>Role</th>
                       <th>Joined</th>
                     </tr>
                   </thead>
-                  <tbody id="users-tbody">
-                    {dummyUsers.map((u, index) => (
-                      <tr key={index}>
-                        <td>{u.name}</td>
-                        <td style={{ color: 'var(--muted-foreground)' }}>{u.email}</td>
-                        <td style={{ color: 'var(--muted-foreground)' }}>{u.uploads}</td>
-                        <td style={{ color: 'var(--muted-foreground)' }}>{u.joined}</td>
+                  <tbody>
+                    {users.map((u) => (
+                      <tr key={u.id}>
+                        <td>{u.username}</td>
+                        <td>{u.email}</td>
+                        <td style={{textTransform: 'capitalize'}}>{u.role}</td>
+                        <td>{new Date(u.created_at).toLocaleDateString()}</td>
                       </tr>
                     ))}
                   </tbody>

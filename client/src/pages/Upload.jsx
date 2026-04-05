@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 
 const Upload = () => {
-  // 1. State for file and metadata [cite: 18]
+  // 1. State for file and metadata
   const [file, setFile] = useState(null);
   const [formData, setFormData] = useState({
     title: '',
@@ -19,14 +19,13 @@ const Upload = () => {
     setFile(e.target.files[0]);
   };
 
-  // 2. Automated Storage Logic [cite: 29, 37]
+  // 2. Automated Storage Logic
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!file) return alert("Please select a file!");
 
-    // Requirement: Use FormData for multipart uploads (File + Metadata) [cite: 14, 18]
-    const data = new FormData();
+    // Requirement: Use FormData for multipart uploads (File + Metadata)
     data.append('materialFile', file); 
     data.append('title', formData.title);
     data.append('description', formData.description);
@@ -38,11 +37,11 @@ const Upload = () => {
       await axios.post('http://localhost:5001/api/materials/upload', data, {
         headers: {
           'Content-Type': 'multipart/form-data',
-          'Authorization': `Bearer ${token}` // Requirement: Secure Authentication [cite: 20]
+          'Authorization': `Bearer ${token}` // Requirement: Secure Authentication
         }
       });
 
-      alert("Upload Successful! Awaiting Admin Approval."); // [cite: 11, 18]
+      alert("Upload Successful! Awaiting Admin Approval.");
     } catch (err) {
       alert(err.response?.data?.message || "Upload Failed");
     }

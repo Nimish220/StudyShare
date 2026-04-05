@@ -10,13 +10,16 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-
+const adminRoutes = require('./routes/adminRoutes');
+app.use('/api/admin', adminRoutes);
 app.use('/api/auth', authRoutes);
 const materialController = require('./controllers/materialController');
-const verifyToken = require('./middleware/authMiddleware');
+const { verifyToken } = require('./middleware/authMiddleware');
 const upload = require('./middleware/uploadMiddleware');
+const materialRoutes = require('./routes/materialRoutes');
 
-// Workflow: Login -> Verify Token -> Save File -> Save Metadata [cite: 37]
+app.use('/api/materials', materialRoutes);
+// Workflow: Login -> Verify Token -> Save File -> Save Metadata
 app.post(
     '/api/materials/upload', 
     verifyToken,                   // 1. Check if user is logged in

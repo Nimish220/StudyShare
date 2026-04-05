@@ -9,6 +9,7 @@ import Browse from './pages/Browse';
 import AdminDashboard from './pages/AdminDashboard';
 import UserDashboard from './pages/UserDashboard';
 import Upload from './pages/Upload';
+import ExplorePage from './pages/ExplorePage';
 import SuperAdmin from './pages/SuperAdmin';
 import './index.css';
 
@@ -25,6 +26,7 @@ function App() {
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/dashboard" element={<UserDashboard />} />
           <Route path="/upload" element={<Upload />} />
+          <Route path="/explore" element={<ExplorePage />} />
           <Route path="/superadmin" element={<SuperAdmin />} />
         </Routes>
         <Footer />
