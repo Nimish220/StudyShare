@@ -24,13 +24,13 @@ const Upload = () => {
     e.preventDefault();
 
     if (!file) return alert("Please select a file!");
-
+    const data = new FormData();
     // Requirement: Use FormData for multipart uploads (File + Metadata)
     data.append('materialFile', file); 
     data.append('title', formData.title);
     data.append('description', formData.description);
     data.append('category', formData.category);
-
+    data.append('tags', formData.tags);
     try {
       const token = localStorage.getItem('token'); 
 
