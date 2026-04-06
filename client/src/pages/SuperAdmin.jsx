@@ -81,6 +81,7 @@ const SuperAdmin = () => {
     const savedUser = localStorage.getItem('studyshare_user');
     if (savedUser) setAdminUser(JSON.parse(savedUser));
     fetchSuperDashboardData();
+    if (pollTimer.current) clearInterval(pollTimer.current);
     pollTimer.current = setInterval(fetchSuperDashboardData, 30000);
     return () => clearInterval(pollTimer.current);
   }, [fetchSuperDashboardData]);
@@ -125,7 +126,7 @@ const SuperAdmin = () => {
         <header style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '20px', marginBottom: '40px' }}>
           <div>
             <h1 style={{ fontSize: 'clamp(1.5rem, 5vw, 2.5rem)', margin: 0, color: theme.primary }}>System Control</h1>
-            <p style={{ color: theme.secondary, fontFamily: 'sans-serif', margin: '5px 0' }}>Welcome, <b>{adminUser.username}</b></p>
+            <p style={{ color: theme.secondary, fontFamily: 'sans-serif', margin: '5px 0' }}>Welcome, <b>{adminUser.username || 'Super Admin'}</b></p>
           </div>
           <button onClick={fetchSuperDashboardData} disabled={loading} style={{ padding: '10px 20px', borderRadius: '30px', border: `1px solid ${theme.accent}`, background: theme.white, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', color: theme.primary, fontWeight: 'bold' }}>
             <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />

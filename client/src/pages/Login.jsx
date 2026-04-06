@@ -25,7 +25,7 @@ const Login = () => {
       const dbRole = response.data.user.role; 
       
       const userData = {
-        name: response.data.user.username || email.split('@')[0],
+        username: response.data.user.username || email.split('@')[0],
         email: email,
         role: dbRole // Always trust the DB role
       };
