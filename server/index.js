@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const db = require('./config/db');
 const authRoutes = require('./routes/authRoutes.js');
 require('dotenv').config();
@@ -10,6 +11,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 const adminRoutes = require('./routes/adminRoutes');
 app.use('/api/admin', adminRoutes);
 app.use('/api/auth', authRoutes);

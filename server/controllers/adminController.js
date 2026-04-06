@@ -1,5 +1,5 @@
 const db = require('../config/db');
-
+const superAdminController = require('./superAdminController');
 exports.getAdminStats = async (req, res) => {
     try {
         const [materials] = await db.query("SELECT COUNT(*) as total FROM materials");
@@ -48,44 +48,95 @@ const { logAction } = require('./superAdminController');
 exports.approveMaterial = async (req, res) => {
     try {
         const { id } = req.params;
-        const adminId = req.user.id;
+        const adminId = req.user.id; // From verifyToken middleware
 
-        // Fetches Admin name from DB
-        const [adminRows] = await db.query("SELECT username FROM users WHERE id = ?", [adminId]);
-        const adminName = adminRows[0]?.username || "An Admin";
+        // 1. Get Details: Material Title, Uploader Name, and Admin Name
+        const [details] = await db.query(`
+            SELECT m.title, u_student.username as student_name, u_admin.username as admin_name
+            FROM materials m
+            JOIN users u_student ON m.uploader_id = u_student.id
+            JOIN users u_admin ON u_admin.id = ?
+            WHERE m.id = ?
+        `, [adminId, id]);
 
+        if (details.length === 0) {
+            return res.status(404).json({ error: "Material not found" });
+        }
+
+        const { title, student_name, admin_name } = details[0];
+
+        // 2. Perform the approval update
         await db.query("UPDATE materials SET status = 'approved' WHERE id = ?", [id]);
 
-        // Logs with the admin's actual name
-        await logAction(`${adminName} approved material ID: ${id}`);
+        // 3. LOG THE ACTION with full details
+        // Format: "Admin Ronak approved 'Operating Systems' uploaded by John Doe"
+        await superAdminController.logAction(
+            `Admin ${admin_name} approved "${title}" uploaded by ${student_name}`, 
+            adminId
+        );
 
-        res.json({ message: "Material approved" });
+        res.json({ message: "Material approved and action logged" });
     } catch (err) {
+        console.error("Approve Error:", err);
         res.status(500).json({ error: err.message });
     }
 };
 exports.deleteMaterial = async (req, res) => {
     try {
         const { id } = req.params;
-        const adminId = req.user.id;
+        const adminId = req.user.id; // From verifyToken middleware
 
-        // 1. Get the admin's name (to show who did the deleting)
-        const [adminRows] = await db.query("SELECT username FROM users WHERE id = ?", [adminId]);
-        const adminName = adminRows[0]?.username || "An Admin";
+        // 1. Get Details: Material Title, Uploader Name, and Admin Name
+        const [details] = await db.query(`
+            SELECT m.title, u_student.username as student_name, u_admin.username as admin_name
+            FROM materials m
+            JOIN users u_student ON m.uploader_id = u_student.id
+            JOIN users u_admin ON u_admin.id = ?
+            WHERE m.id = ?
+        `, [adminId, id]);
 
-        // 2. Optional: Get the material title before deleting it so the log is descriptive
-        const [materialRows] = await db.query("SELECT title FROM materials WHERE id = ?", [id]);
-        const materialTitle = materialRows[0]?.title || "Unknown Material";
+        if (details.length === 0) {
+            return res.status(404).json({ error: "Material not found" });
+        }
 
-        // 3. Perform the deletion
+        const { title, student_name, admin_name } = details[0];
+
+        // 2. Perform the deletion
         await db.query('DELETE FROM materials WHERE id = ?', [id]);
 
-        // 4. LOG THE ACTION - This makes it show up in Super Admin Recent Activity
-        await logAction(`${adminName} removed flagged material: "${materialTitle}" (ID: ${id})`);
+        // 3. LOG THE ACTION with full details
+        // Format: "Admin Ronak removed 'Operating Systems' uploaded by John Doe"
+        await superAdminController.logAction(
+            `Admin ${admin_name} removed "${title}" uploaded by ${student_name}`, 
+            adminId
+        );
 
-        res.json({ message: "Material removed successfully" });
+        res.json({ message: "Material removed and action logged" });
     } catch (err) {
         console.error("Delete Error:", err);
         res.status(500).json({ error: "Database error during deletion" });
+    }
+};
+exports.getSystemLogs = async (req, res) => {
+    try {
+        const adminId = req.user.id;
+        const role = req.user.role;
+
+        let sql;
+        let params = [];
+
+        // If SuperAdmin, show all logs. If Admin, show only their own actions.
+        if (role === 'superadmin') {
+            sql = `SELECT * FROM system_logs ORDER BY created_at DESC LIMIT 100`;
+        } else {
+            sql = `SELECT * FROM system_logs WHERE admin_id = ? ORDER BY created_at DESC LIMIT 50`;
+            params = [adminId];
+        }
+
+        const [logs] = await db.query(sql, params);
+        res.json(logs);
+    } catch (err) {
+        console.error("Logs Fetch Error:", err);
+        res.status(500).json({ error: "Failed to fetch logs" });
     }
 };
