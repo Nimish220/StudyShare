@@ -1,29 +1,55 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { 
   Users, ShieldCheck, FileText, Download, Activity, 
-  RefreshCw, Settings, UserPlus, BarChart3, Clock, 
-  CheckCircle2, UploadCloud, ShieldAlert, Trash2 
+  RefreshCw, Settings, BarChart3, Clock, 
+  CheckCircle2, UploadCloud, ShieldAlert, Trash2, ChevronRight,
+  ChevronLeft, Filter, Search, X, UserPlus, ShieldPlus
 } from 'lucide-react';
-
+import { 
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
+  PieChart, Pie, Cell, Legend 
+} from 'recharts';
 const SuperAdmin = () => {
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState('tab-overview');
   const [adminUser, setAdminUser] = useState({ username: 'Super Admin' });
   const [users, setUsers] = useState([]);
   const [stats, setStats] = useState({
     totalUsers: 0, activeAdmins: 0, totalMaterials: 0, totalDownloads: 0, recentActivity: []
   });
-  const [loading, setLoading] = useState(false);
+  
+  // --- STATE MANAGEMENT ---
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [roleFilter, setRoleFilter] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showLogsModal, setShowLogsModal] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [newUser, setNewUser] = useState({ username: '', email: '', password: '', role: 'student' });
 
-  const token = localStorage.getItem('token');
-  const headers = { Authorization: `Bearer ${token}` };
+  const [loading, setLoading] = useState(false);
+  const [highlightAction, setHighlightAction] = useState(null);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const pollTimer = useRef(null);
 
   const theme = {
-    primary: '#5d4037', secondary: '#8d6e63', accent: '#d7ccc8', bg: '#ffffff', card: '#fcfaf9', text: '#3e2723'
+    primary: '#5d4037', secondary: '#8d6e63', accent: '#d7ccc8', 
+    bg: '#ffffff', card: '#fcfaf9', text: '#3e2723', white: '#ffffff', danger: '#d32f2f', success: '#2e7d32'
   };
 
-  const fetchSuperDashboardData = async () => {
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const fetchSuperDashboardData = useCallback(async () => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
     setLoading(true);
+    const headers = { Authorization: `Bearer ${token}` };
     try {
       const [statsRes, usersRes] = await Promise.all([
         axios.get('http://localhost:5001/api/super/stats', { headers }),
@@ -31,210 +57,352 @@ const SuperAdmin = () => {
       ]);
       setStats(statsRes.data);
       setUsers(usersRes.data);
-    } catch (err) {
-      if (err.response?.status === 403) {
-        alert("Session Sync Error: Your role may have changed. Please log out and back in.");
-      }
-      console.error("Fetch Error:", err);
-    } finally {
-      setTimeout(() => setLoading(false), 500);
-    }
-  };
+    } catch (err) { console.error("Fetch Error:", err); }
+    finally { setTimeout(() => setLoading(false), 600); }
+  }, []);
+
+  // --- FILTER & PAGINATION LOGIC ---
+  const filteredUsers = useMemo(() => {
+    return users.filter(u => {
+      const matchesRole = roleFilter === 'all' || u.role === roleFilter;
+      const matchesSearch = u.username.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                           u.email.toLowerCase().includes(searchQuery.toLowerCase());
+      return matchesRole && matchesSearch;
+    });
+  }, [users, roleFilter, searchQuery]);
+
+  const totalPages = Math.ceil(filteredUsers.length / pageSize);
+  const currentUsers = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredUsers.slice(start, start + pageSize);
+  }, [filteredUsers, currentPage, pageSize]);
 
   useEffect(() => {
     const savedUser = localStorage.getItem('studyshare_user');
     if (savedUser) setAdminUser(JSON.parse(savedUser));
     fetchSuperDashboardData();
-  }, []);
+    pollTimer.current = setInterval(fetchSuperDashboardData, 30000);
+    return () => clearInterval(pollTimer.current);
+  }, [fetchSuperDashboardData]);
 
-  const handleToggleAdmin = async (userId, currentRole) => {
-    const newRole = currentRole === 'admin' ? 'student' : 'admin';
-    if (window.confirm(`Update role to ${newRole.toUpperCase()}?`)) {
+  // --- ACTIONS ---
+  const handleCreateUser = async (e) => {
+    e.preventDefault();
+    const token = localStorage.getItem('token');
+    try {
+      await axios.post('http://localhost:5001/api/super/create-user', newUser, { headers: { Authorization: `Bearer ${token}` } });
+      setShowCreateModal(false);
+      setNewUser({ username: '', email: '', password: '', role: 'student' });
+      fetchSuperDashboardData();
+    } catch (err) { alert("Creation failed: " + err.response?.data?.message); }
+  };
+
+  const handleUpdateRole = async (userId, newRole) => {
+    const token = localStorage.getItem('token');
+    if (window.confirm(`Change user role to ${newRole.toUpperCase()}?`)) {
       try {
-        await axios.patch(`http://localhost:5001/api/super/role/${userId}`, { role: newRole }, { headers });
-        fetchSuperDashboardData(); 
-      } catch (err) { alert("Error updating role"); }
+        await axios.patch(`http://localhost:5001/api/super/role/${userId}`, { role: newRole }, { headers: { Authorization: `Bearer ${token}` } });
+        fetchSuperDashboardData();
+      } catch (err) { alert("Role update failed"); }
+    }
+  };
+
+  const handleDeleteUser = async (userId) => {
+    const token = localStorage.getItem('token');
+    if (window.confirm("CRITICAL: Delete this user permanently?")) {
+      try {
+        await axios.delete(`http://localhost:5001/api/super/user/${userId}`, { headers: { Authorization: `Bearer ${token}` } });
+        fetchSuperDashboardData();
+      } catch (err) { alert("Delete failed"); }
     }
   };
 
   return (
-    <main style={{ backgroundColor: theme.bg, minHeight: '100vh', color: theme.text, fontFamily: 'serif' }}>
-      <div className="container" style={{ maxWidth: '1200px', margin: '0 auto', padding: '40px 20px' }}>
+    <main style={{ backgroundColor: theme.bg, minHeight: '100vh', color: theme.text, fontFamily: 'serif', paddingBottom: '50px' }}>
+      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
         
         {/* HEADER */}
-        <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
+        <header style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '20px', marginBottom: '40px' }}>
           <div>
-            <h1 style={{ fontSize: '2.5rem', margin: 0, fontWeight: 'bold', color: theme.primary }}>Super Admin Dashboard</h1>
-            <p style={{ color: theme.secondary, fontSize: '1rem', fontFamily: 'sans-serif' }}>System Authority — Welcome, <b>{adminUser.username}</b></p>
+            <h1 style={{ fontSize: 'clamp(1.5rem, 5vw, 2.5rem)', margin: 0, color: theme.primary }}>System Control</h1>
+            <p style={{ color: theme.secondary, fontFamily: 'sans-serif', margin: '5px 0' }}>Welcome, <b>{adminUser.username}</b></p>
           </div>
-          <button 
-            onClick={fetchSuperDashboardData} 
-            style={{ padding: '12px 24px', borderRadius: '8px', border: `1.5px solid ${theme.primary}`, background: theme.white, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', color: theme.primary, fontWeight: 'bold' }}
-          >
+          <button onClick={fetchSuperDashboardData} disabled={loading} style={{ padding: '10px 20px', borderRadius: '30px', border: `1px solid ${theme.accent}`, background: theme.white, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', color: theme.primary, fontWeight: 'bold' }}>
             <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
             {loading ? 'Syncing...' : 'Refresh Metrics'}
           </button>
         </header>
 
-        {/* STATS SECTION */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px', marginBottom: '50px' }}>
-          <StatBox icon={<Users />} label="Total Users" value={stats.totalUsers} percent={80} theme={theme} />
-          <StatBox icon={<ShieldCheck />} label="Active Admins" value={stats.activeAdmins} percent={35} theme={theme} />
-          <StatBox icon={<FileText />} label="Materials" value={stats.totalMaterials} percent={60} theme={theme} />
-          <StatBox icon={<Download />} label="Downloads" value={stats.totalDownloads} percent={90} theme={theme} />
+        {/* STATS */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '15px', marginBottom: '40px' }}>
+          <StatLine icon={<Users />} label="Users" value={stats.totalUsers} theme={theme} />
+          <StatLine icon={<ShieldCheck />} label="Admins" value={stats.activeAdmins} theme={theme} />
+          <StatLine icon={<FileText />} label="Materials" value={stats.totalMaterials} theme={theme} />
+          <StatLine icon={<Download />} label="Downloads" value={stats.totalDownloads} theme={theme} />
         </div>
 
-        {/* TAB NAVIGATION */}
-        <div style={{ display: 'flex', gap: '40px', borderBottom: `1px solid ${theme.accent}`, marginBottom: '30px' }}>
-          <TabNav label="Overview" active={activeTab === 'tab-overview'} onClick={() => setActiveTab('tab-overview')} theme={theme} />
-          <TabNav label="Manage Users" active={activeTab === 'tab-manage-users'} onClick={() => setActiveTab('tab-manage-users')} theme={theme} />
-          <TabNav label="Analytics" active={activeTab === 'tab-analytics'} onClick={() => setActiveTab('tab-analytics')} theme={theme} />
+        {/* TABS */}
+        <div style={{ display: 'flex', gap: '25px', borderBottom: `1px solid ${theme.accent}`, marginBottom: '25px', overflowX: 'auto' }}>
+          {['Overview', 'Manage Users', 'Analytics'].map(tab => (
+            <button key={tab} onClick={() => setActiveTab(`tab-${tab.toLowerCase().replace(' ', '-')}`)}
+              style={{ padding: '12px 5px', border: 'none', background: 'none', cursor: 'pointer', color: activeTab.includes(tab.toLowerCase().replace(' ', '-')) ? theme.primary : theme.secondary, borderBottom: activeTab.includes(tab.toLowerCase().replace(' ', '-')) ? `2px solid ${theme.primary}` : 'none', fontWeight: 'bold', whiteSpace: 'nowrap' }}
+            >{tab}</button>
+          ))}
         </div>
 
-        {/* OVERVIEW CONTENT */}
+        {/* TAB 1: OVERVIEW */}
         {activeTab === 'tab-overview' && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: '30px' }}>
-            
-            {/* System Controls */}
-            <div style={{ background: theme.card, padding: '30px', borderRadius: '15px', border: `1px solid ${theme.accent}` }}>
-              <h3 style={{ marginBottom: '25px', display: 'flex', alignItems: 'center', gap: '10px' }}><Settings size={20}/> System Controls</h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                <ControlBtn label="Add Admin" icon={<UserPlus size={18}/>} theme={theme} onClick={() => setActiveTab('tab-manage-users')} primary />
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '25px' }}>
+            <div style={{ background: theme.card, padding: '25px', borderRadius: '16px', border: `1px solid ${theme.accent}` }}>
+              <h3 style={{ margin: '0 0 20px 0', fontSize: '1.1rem' }}><Settings size={18}/> Management Actions</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <ControlBtn label="Create New User" icon={<UserPlus size={18}/>} theme={theme} onClick={() => setShowCreateModal(true)} primary />
                 <ControlBtn label="Manage Users" icon={<Users size={18}/>} theme={theme} onClick={() => setActiveTab('tab-manage-users')} />
-                <ControlBtn label="View Analytics" icon={<BarChart3 size={18}/>} theme={theme} onClick={() => setActiveTab('tab-analytics')} />
-                <ControlBtn label="Run Maintenance" icon={<Activity size={18}/>} theme={theme} onClick={() => axios.post('http://localhost:5001/api/super/maintenance', {}, {headers}).then(fetchSuperDashboardData)} />
               </div>
             </div>
 
-            {/* Recent Activity */}
-            <div style={{ background: theme.white, padding: '30px', borderRadius: '15px', border: `1px solid ${theme.accent}` }}>
-              <h3 style={{ marginBottom: '25px', display: 'flex', alignItems: 'center', gap: '10px' }}><Clock size={20}/> Recent Activity</h3>
-              <div style={{ borderLeft: `2px solid ${theme.accent}`, marginLeft: '10px', paddingLeft: '20px' }}>
-                {stats.recentActivity?.length > 0 ? stats.recentActivity.map((act, i) => (
-                  <div key={i} style={{ marginBottom: '20px', position: 'relative' }}>
-                    <div style={{ position: 'absolute', left: '-31px', top: '2px', background: theme.bg, padding: '2px' }}>
-                         {act.log_text.toLowerCase().includes('uploaded') ? (
-                            <UploadCloud size={16} color={theme.primary}/> 
-                         ) : act.log_text.toLowerCase().includes('approved') ? (
-                            <CheckCircle2 size={16} color={theme.primary}/>
-                         ) : act.log_text.toLowerCase().includes('removed') ? (
-                            <Trash2 size={16} color={theme.primary}/>
-                         ) : (
-                            <ShieldAlert size={16} color={theme.primary}/>
-                         )}
-                    </div>
-                    <div style={{ fontSize: '0.95rem', fontWeight: 'bold', color: theme.primary }}>{act.log_text}</div>
-                    <div style={{ fontSize: '0.8rem', color: theme.secondary, fontFamily: 'sans-serif' }}>{act.time_ago} • Verified System Action</div>
+            <div style={{ background: theme.white, padding: '25px', borderRadius: '16px', border: `1px solid ${theme.accent}`, cursor: 'pointer' }} onClick={() => setShowLogsModal(true)}>
+              <h3 style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: 0, fontSize: '1.1rem' }}><Clock size={18}/> System Logs</h3>
+              <div style={{ maxHeight: '200px', overflow: 'hidden', opacity: 0.8 }}>
+                {stats.recentActivity?.slice(0, 5).map((act, i) => (
+                  <div key={i} style={{ padding: '10px 0', borderBottom: `1px solid ${theme.card}`, fontSize: '0.8rem' }}>
+                    <b>{act.log_text}</b> — {act.time_ago}
                   </div>
-                )) : <div style={{ color: '#999', textAlign: 'center', padding: '20px' }}>No system events logged recently.</div>}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* USER LIST CONTENT */}
-        {activeTab === 'tab-manage-users' && (
-          <div style={{ background: theme.white, borderRadius: '15px', overflow: 'hidden', border: `1px solid ${theme.accent}` }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead style={{ background: theme.white, borderBottom: `2.5px solid ${theme.primary}` }}>
-                <tr>
-                  <th style={{ padding: '20px', textAlign: 'left', color: theme.primary, textTransform: 'uppercase', fontSize: '0.8rem', letterSpacing: '1px' }}>Identify</th>
-                  <th style={{ textAlign: 'left', color: theme.primary, textTransform: 'uppercase', fontSize: '0.8rem', letterSpacing: '1px' }}>Clearance</th>
-                  <th style={{ textAlign: 'right', paddingRight: '20px', color: theme.primary, textTransform: 'uppercase', fontSize: '0.8rem', letterSpacing: '1px' }}>Management</th>
-                </tr>
-              </thead>
-              <tbody>
-                {users.map((u) => (
-                  <tr key={u.id} style={{ borderBottom: `1px solid ${theme.accent}` }}>
-                    <td style={{ padding: '20px' }}>
-                      <div style={{ fontWeight: 'bold' }}>{u.username}</div>
-                      <div style={{ fontSize: '0.8rem', color: theme.secondary, fontFamily: 'sans-serif' }}>{u.email}</div>
-                    </td>
-                    <td>
-                      <span style={{ padding: '5px 12px', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 'bold', background: u.role === 'admin' ? theme.primary : theme.accent, color: u.role === 'admin' ? theme.white : theme.primary }}>
-                        {u.role.toUpperCase()}
-                      </span>
-                    </td>
-                    <td style={{ textAlign: 'right', paddingRight: '20px' }}>
-                      <button 
-                        onClick={() => handleToggleAdmin(u.id, u.role)}
-                        disabled={u.role === 'superadmin'}
-                        style={{ padding: '8px 16px', borderRadius: '5px', border: `1.5px solid ${theme.primary}`, background: u.role === 'admin' ? theme.primary : 'none', color: u.role === 'admin' ? theme.white : theme.primary, cursor: 'pointer', fontWeight: 'bold', opacity: u.role === 'superadmin' ? 0.3 : 1 }}
-                      >
-                        {u.role === 'admin' ? 'Remove Admin' : 'Make Admin'}
-                      </button>
-                    </td>
-                  </tr>
                 ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {/* ANALYTICS CONTENT */}
-        {activeTab === 'tab-analytics' && (
-          <div style={{ background: theme.white, padding: '40px', borderRadius: '15px', border: `1px solid ${theme.accent}`, textAlign: 'center' }}>
-            <BarChart3 size={48} color={theme.primary} style={{ marginBottom: '20px' }}/>
-            <h2 style={{ color: theme.primary }}>System Analytics</h2>
-            <p style={{ color: theme.secondary, marginBottom: '30px' }}>Graphical data representation of StudyShare growth.</p>
-            
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-              <div style={{ padding: '20px', background: theme.card, borderRadius: '12px', border: `1px solid ${theme.accent}` }}>
-                <h4 style={{ margin: '0 0 15px 0' }}>Platform Activity Trends</h4>
-                <div style={{ height: '150px', display: 'flex', alignItems: 'flex-end', gap: '15px', justifyContent: 'center' }}>
-                  <div style={{ width: '35px', height: '40%', background: theme.primary, borderRadius: '4px' }}></div>
-                  <div style={{ width: '35px', height: '70%', background: theme.primary, borderRadius: '4px' }}></div>
-                  <div style={{ width: '35px', height: '90%', background: theme.primary, borderRadius: '4px' }}></div>
-                  <div style={{ width: '35px', height: '65%', background: theme.primary, borderRadius: '4px' }}></div>
-                </div>
-                <p style={{ fontSize: '0.8rem', marginTop: '10px', color: theme.secondary }}>Quarterly Growth (%)</p>
-              </div>
-              
-              <div style={{ padding: '20px', background: theme.card, borderRadius: '12px', border: `1px solid ${theme.accent}`, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                <h4 style={{ margin: '0' }}>Engagement Ratio</h4>
-                <div style={{ fontSize: '3rem', fontWeight: '900', color: theme.primary, margin: '15px 0' }}>
-                  {stats.totalUsers > 0 ? (stats.totalDownloads / stats.totalUsers).toFixed(1) : 0}
-                </div>
-                <p style={{ fontSize: '0.85rem', color: theme.secondary }}>Avg Downloads per User</p>
+                <p style={{ color: theme.primary, fontWeight: 'bold', textAlign: 'center', marginTop: '10px' }}>View All Logs →</p>
               </div>
             </div>
           </div>
         )}
+
+        {/* TAB 2: MANAGE USERS */}
+        {activeTab === 'tab-manage-users' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px', alignItems: 'center', background: theme.card, padding: '15px', borderRadius: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: '200px', background: theme.white, padding: '8px 15px', borderRadius: '8px', border: `1px solid ${theme.accent}` }}>
+                <Search size={16} color={theme.secondary}/>
+                <input type="text" placeholder="Search..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} style={{ border: 'none', outline: 'none', width: '100%' }} />
+              </div>
+              <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)} style={{ padding: '10px', borderRadius: '8px', border: `1px solid ${theme.accent}` }}>
+                <option value="all">All Roles</option>
+                <option value="student">Students</option>
+                <option value="admin">Admins</option>
+                <option value="superadmin">Superadmins</option>
+              </select>
+              <select value={pageSize} onChange={(e) => setPageSize(Number(e.target.value))} style={{ padding: '10px', borderRadius: '8px', border: `1px solid ${theme.accent}` }}>
+                {[10, 20, 50, 100].map(v => <option key={v} value={v}>Show {v}</option>)}
+              </select>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {currentUsers.map((u) => (
+                <div key={u.id} style={{ background: theme.white, padding: '15px', borderRadius: '12px', border: `1px solid ${theme.accent}`, display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '15px' }}>
+                  <div>
+                    <div style={{ fontWeight: 'bold' }}>{u.username}</div>
+                    <div style={{ fontSize: '0.75rem', color: theme.secondary }}>{u.email}</div>
+                  </div>
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <span style={{ padding: '4px 10px', borderRadius: '20px', fontSize: '0.7rem', fontWeight: 'bold', background: theme.accent }}>{u.role.toUpperCase()}</span>
+                    
+                    {/* ROLE TOGGLES */}
+                    {u.role === 'student' && <button onClick={() => handleUpdateRole(u.id, 'admin')} style={btnStyle(theme.primary)}>Make Admin</button>}
+                    {u.role === 'admin' && (
+                      <>
+                        <button onClick={() => handleUpdateRole(u.id, 'student')} style={btnStyle(theme.secondary)}>Demote</button>
+                        <button onClick={() => handleUpdateRole(u.id, 'superadmin')} style={btnStyle(theme.primary)}>Make Super</button>
+                      </>
+                    )}
+                    {u.role === 'superadmin' && u.id !== adminUser.id && (
+                        <button 
+                          onClick={() => handleUpdateRole(u.id, 'admin')} 
+                          disabled={stats.totalSuperAdmins <= 1} // Prevent revoking if only 1 exists
+                          style={stats.totalSuperAdmins <= 1 ? btnDisabledStyle : btnStyle(theme.secondary)}
+                        >
+                          {stats.totalSuperAdmins <= 1 ? "Minimum 1 Super Required" : "Revoke Super"}
+                        </button>
+                      )}
+                    <button onClick={() => handleDeleteUser(u.id)} style={{ color: theme.danger, border: 'none', background: 'none', cursor: 'pointer' }}><Trash2 size={18}/></button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {totalPages > 1 && (
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '15px' }}>
+                <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)} style={{ cursor: 'pointer', background: 'none', border: 'none' }}><ChevronLeft/></button>
+                <span>{currentPage} / {totalPages}</span>
+                <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)} style={{ cursor: 'pointer', background: 'none', border: 'none' }}><ChevronRight/></button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'tab-analytics' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '20px' }}>
+                
+                {/* CHART 1: USER DISTRIBUTION */}
+                <div style={{ background: theme.card, padding: '20px', borderRadius: '16px', border: `1px solid ${theme.accent}`, height: '350px' }}>
+                  <h3 style={{ margin: '0 0 15px 0', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <Users size={18}/> User Composition
+                  </h3>
+                  <ResponsiveContainer width="100%" height="90%">
+                    <PieChart>
+                      <Pie
+                        data={[
+                          { name: 'Students', value: stats.totalUsers - stats.activeAdmins },
+                          { name: 'Admins', value: stats.activeAdmins },
+                        ]}
+                        innerRadius={60}
+                        outerRadius={80}
+                        paddingAngle={5}
+                        dataKey="value"
+                      >
+                        <Cell fill={theme.accent} />
+                        <Cell fill={theme.primary} />
+                      </Pie>
+                      <Tooltip />
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* CHART 2: SYSTEM USAGE */}
+                <div style={{ background: theme.card, padding: '20px', borderRadius: '16px', border: `1px solid ${theme.accent}`, height: '350px' }}>
+                  <h3 style={{ margin: '0 0 15px 0', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <Activity size={18}/> System Activity
+                  </h3>
+                  <ResponsiveContainer width="100%" height="90%">
+                    <BarChart data={[
+                      { name: 'Materials', count: stats.totalMaterials },
+                      { name: 'Downloads', count: stats.totalDownloads }
+                    ]}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                      <XAxis dataKey="name" axisLine={false} tickLine={false} />
+                      <YAxis axisLine={false} tickLine={false} />
+                      <Tooltip cursor={{fill: 'transparent'}} />
+                      <Bar dataKey="count" fill={theme.secondary} radius={[4, 4, 0, 0]} barSize={40} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+
+              </div>
+
+              {/* GROWTH SUMMARY FOOTER */}
+              <div style={{ background: theme.primary, color: theme.white, padding: '20px', borderRadius: '12px', display: 'flex', justifyContent: 'space-around', alignItems: 'center', flexWrap: 'wrap', gap: '20px' }}>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: '0.8rem', opacity: 0.8 }}>Engagement Rate</div>
+                  <div style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>
+                    {stats.totalUsers > 0 ? (stats.totalDownloads / stats.totalUsers).toFixed(1) : 0} pts
+                  </div>
+                </div>
+                <div style={{ width: '1px', height: '30px', background: theme.white, opacity: 0.3 }} className="hidden-mobile"></div>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: '0.8rem', opacity: 0.8 }}>Total Resources</div>
+                  <div style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>{stats.totalMaterials} Units</div>
+                </div>
+              </div>
+            </div>
+          )}
       </div>
+
+      {/* MODAL: CREATE USER */}
+      {showCreateModal && (
+        <div className="modal-overlay" style={modalOverlayStyle}>
+          <div style={modalContentStyle(theme)}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
+              <h2>Create Account</h2>
+              <X onClick={() => setShowCreateModal(false)} style={{ cursor: 'pointer' }}/>
+            </div>
+            <form onSubmit={handleCreateUser} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+              <input type="text" placeholder="Username" required value={newUser.username} onChange={e => setNewUser({...newUser, username: e.target.value})} style={inputStyle(theme)} />
+              <input type="email" placeholder="Email Address" required value={newUser.email} onChange={e => setNewUser({...newUser, email: e.target.value})} style={inputStyle(theme)} />
+              <input type="password" placeholder="Temporary Password" required value={newUser.password} onChange={e => setNewUser({...newUser, password: e.target.value})} style={inputStyle(theme)} />
+              <select value={newUser.role} onChange={e => setNewUser({...newUser, role: e.target.value})} style={inputStyle(theme)}>
+                <option value="student">Student</option>
+                <option value="admin">Admin</option>
+                <option value="superadmin">Superadmin</option>
+              </select>
+              <button type="submit" style={{ ...btnStyle(theme.primary), padding: '15px', color: 'white', background: theme.primary }}>Confirm Creation</button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: SYSTEM LOGS */}
+      {showLogsModal && (
+        <div style={modalOverlayStyle}>
+          <div style={{ ...modalContentStyle(theme), maxWidth: '600px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
+              <h2>Full Activity Audit</h2>
+              <X onClick={() => setShowLogsModal(false)} style={{ cursor: 'pointer' }}/>
+            </div>
+            <div style={{ maxHeight: '60vh', overflowY: 'auto' }}>
+              {stats.recentActivity?.map((act, i) => (
+                <div key={i} style={{ padding: '15px 0', borderBottom: `1px solid ${theme.accent}` }}>
+                  <div style={{ fontWeight: 'bold' }}>{act.log_text}</div>
+                  <div style={{ fontSize: '0.8rem', color: theme.secondary }}>{act.time_ago}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      <style>{`
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .animate-spin { animation: spin 1s linear infinite; }
+      `}</style>
     </main>
   );
 };
 
-// --- GRAPHICAL COMPONENTS ---
-const StatBox = ({ icon, label, value, percent, theme }) => (
-  <div style={{ background: theme.card, padding: '25px', borderRadius: '15px', border: `1px solid ${theme.accent}` }}>
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+// --- STYLES & HELPERS ---
+const btnStyle = (color) => ({
+  padding: '6px 12px', borderRadius: '6px', border: `1px solid ${color}`, 
+  background: 'none', color: color, cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold'
+});
+
+const inputStyle = (theme) => ({
+  padding: '12px', borderRadius: '8px', border: `1px solid ${theme.accent}`, outline: 'none'
+});
+
+const modalOverlayStyle = {
+  position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, 
+  background: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000
+};
+
+const modalContentStyle = (theme) => ({
+  background: theme.white, padding: '30px', borderRadius: '20px', width: '90%', maxWidth: '450px'
+});
+
+const StatLine = ({ icon, label, value, theme }) => (
+  <div style={{ background: theme.card, padding: '18px 20px', borderRadius: '12px', border: `1px solid ${theme.accent}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
       <div style={{ color: theme.primary }}>{icon}</div>
-      <div style={{ fontWeight: '900', fontSize: '1.5rem' }}>{value}</div>
+      <span style={{ fontSize: '0.9rem', fontWeight: 'bold', color: theme.secondary }}>{label}</span>
     </div>
-    <div style={{ fontSize: '0.8rem', color: theme.secondary, marginBottom: '8px', fontWeight: 'bold', textTransform: 'uppercase' }}>{label}</div>
-    <div style={{ width: '100%', height: '4px', background: theme.accent, borderRadius: '10px' }}>
-      <div style={{ width: `${percent}%`, height: '100%', background: theme.primary, borderRadius: '10px' }} />
-    </div>
+    <span style={{ fontSize: '1.3rem', fontWeight: '900', color: theme.primary }}>{value.toLocaleString()}</span>
   </div>
 );
 
-const TabNav = ({ label, active, onClick, theme }) => (
-  <button 
-    onClick={onClick}
-    style={{ padding: '15px 0', border: 'none', background: 'none', cursor: 'pointer', fontSize: '1rem', fontWeight: active ? 'bold' : 'normal', color: active ? theme.primary : theme.secondary, borderBottom: active ? `3px solid ${theme.primary}` : 'none' }}
-  >
-    {label}
-  </button>
-);
-
 const ControlBtn = ({ label, icon, theme, onClick, primary }) => (
-  <button 
-    onClick={onClick}
-    style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '15px', borderRadius: '8px', border: `1.5px solid ${theme.primary}`, background: primary ? theme.primary : theme.white, color: primary ? theme.white : theme.primary, cursor: 'pointer', fontWeight: 'bold', transition: '0.2s' }}
-  >
-    {icon} {label}
+  <button onClick={onClick} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px', borderRadius: '12px', border: `1px solid ${theme.primary}`, background: primary ? theme.primary : theme.white, color: primary ? theme.white : theme.primary, cursor: 'pointer', fontWeight: 'bold' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>{icon} {label}</div>
+    <ChevronRight size={16} />
   </button>
 );
 
+const btnDisabledStyle = {
+  padding: '6px 12px',
+  borderRadius: '6px',
+  border: '1px solid #d1d1d1',
+  background: '#f5f5f5',
+  color: '#9e9e9e',
+  cursor: 'not-allowed',
+  fontSize: '0.8rem',
+  fontWeight: 'bold',
+  opacity: 0.7
+};
 export default SuperAdmin;

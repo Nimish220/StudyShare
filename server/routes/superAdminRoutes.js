@@ -7,5 +7,6 @@ router.get('/stats', verifyToken, isSuperAdmin, superAdminController.getSuperSta
 router.get('/users', verifyToken, isSuperAdmin, superAdminController.getAllUsersDetailed);
 router.patch('/role/:id', verifyToken, isSuperAdmin, superAdminController.updateUserRole);
 router.post('/maintenance', verifyToken, isSuperAdmin, superAdminController.runMaintenance);
-
+router.post('/create-user', verifyToken, isSuperAdmin, superAdminController.createUser);
+router.delete('/user/:id', verifyToken, isSuperAdmin, superAdminController.deleteUser);
 module.exports = router;
