@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import axios from 'axios';
 
 const AdminDashboard = () => {
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState('tab-pending');
   const [currentMaterials, setCurrentMaterials] = useState([]);
   const [users, setUsers] = useState([]);
@@ -36,7 +38,19 @@ const AdminDashboard = () => {
     console.error("Dashboard Fetch Error:", err);
   }
 };
-
+  useEffect(() => {
+    // 4. Create an effect to switch tabs when the URL changes
+    const params = new URLSearchParams(location.search);
+    const tabParam = params.get('tab');
+    
+    if (tabParam === 'content') {
+      setActiveTab('tab-content');
+    } else if (tabParam === 'pending') {
+      setActiveTab('tab-pending');
+    }else {
+    setActiveTab('tab-pending');
+  }
+  }, [location]);
   useEffect(() => {
     fetchDashboardData();
   }, [activeTab]);
@@ -53,8 +67,6 @@ const AdminDashboard = () => {
   const handleView = (fileUrl) => {
     window.open(`http://localhost:5001/${fileUrl}`, '_blank');
   };
-
-  // AdminDashboard.jsx
 
   const handleRemove = async (id) => {
     if (window.confirm("Are you sure you want to remove this content?")) {
