@@ -10,6 +10,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import UserDashboard from './pages/UserDashboard';
 import Upload from './pages/Upload';
 import SuperAdmin from './pages/SuperAdmin';
+import ProtectedRoute from './components/ProtectedRoute';
 import './index.css';
 
 function App() {
@@ -21,11 +22,11 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
-          <Route path="/browse" element={<Browse />} />
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/dashboard" element={<UserDashboard />} />
-          <Route path="/upload" element={<Upload />} />
           <Route path="/superadmin" element={<SuperAdmin />} />
+          <Route path="/browse" element={ <ProtectedRoute> <Browse /></ProtectedRoute> } />
+          <Route path="/upload" element={ <ProtectedRoute> <Upload /> </ProtectedRoute>} />
         </Routes>
         <Footer />
       </div>

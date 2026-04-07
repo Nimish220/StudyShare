@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate,useLocation, Link } from 'react-router-dom';
 import axios from 'axios';
 const Login = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [selectedRole, setSelectedRole] = useState('user');
-  // State to toggle password visibility
   const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = async (e) => {
@@ -23,27 +23,39 @@ const Login = () => {
 
       // 2. USE THE ROLE FROM DATABASE (not the selectedRole state)
       const dbRole = response.data.user.role; 
-      
       const userData = {
         username: response.data.user.username || email.split('@')[0],
         email: email,
         role: dbRole // Always trust the DB role
       };
-      
       localStorage.setItem('studyshare_user', JSON.stringify(userData));
-
-      // 3. ROLE-BASED NAVIGATION
-      if (dbRole === 'superadmin') {
-        navigate('/superadmin');
-      } else if (dbRole === 'admin') {
-        navigate('/admin'); // Or '/admin-dashboard' depending on your route name
-      } else {
-        navigate('/dashboard');
+      const destination = location.state?.from?.pathname;
+      
+      if (destination === '/browse') {
+      navigate('/browse');
+      } 
+      // 2. If they were going to /upload but they are an Admin, force them to the Dashboard
+      else if (destination === '/upload' && (dbRole === 'admin' || dbRole === 'superadmin')) {
+              navigate(dbRole === 'superadmin' ? '/superadmin' : '/admin');
       }
-
+      // 3. If it's a regular student going to /upload, let them go
+      else if (destination === '/upload' && dbRole === 'user') {
+              navigate('/upload');
+      }
+      else {
+        // 3. ROLE-BASED NAVIGATION
+        if (dbRole === 'superadmin') {
+          navigate('/superadmin');
+        } else if (dbRole === 'admin') {
+          navigate('/admin'); // Or '/admin-dashboard' depending on your route name
+        } else {
+          navigate('/dashboard');
+        }
+      }
       // 4. Refresh to update the Navbar/Auth state
-      window.location.reload();
-
+     setTimeout(() => {
+        window.location.reload();
+      }, 100);
     } catch (err) {
       alert(err.response?.data?.message || "Login failed. Please check your credentials.");
     }
