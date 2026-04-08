@@ -146,3 +146,12 @@ exports.getUserBookmarks = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
+
+exports.reportMaterial = async (req, res) => {
+    try {
+        const { material_id } = req.body;
+        // Logic: Increment report_count
+        await db.query("UPDATE materials SET report_count = report_count + 1 WHERE id = ?", [material_id]);
+        res.json({ message: "Report submitted to Admin." });
+    } catch (err) { res.status(500).json({ error: err.message }); }
+};

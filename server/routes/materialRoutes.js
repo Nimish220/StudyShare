@@ -20,4 +20,5 @@ router.post('/rate', verifyToken, reviewController.addReview);
 
 router.post('/bookmark', verifyToken, materialController.toggleBookmark); 
 router.get('/bookmarks', verifyToken, materialController.getUserBookmarks);
+router.post('/report', verifyToken, materialController.reportMaterial);
 module.exports = router;

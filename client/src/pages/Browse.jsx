@@ -102,6 +102,21 @@ const Browse = () => {
     } catch (err) { alert("Error submitting rating"); }
   };
 
+  const handleReport = async (id) => {
+    const confirmReport = window.confirm("Report this material for Admin review?");
+    if (!confirmReport) return;
+
+    try {
+      await axios.post('http://localhost:5001/api/materials/report', 
+        { material_id: id }, 
+        { headers }
+      );
+      alert("Material reported. Thank you for keeping StudyShare safe.");
+    } catch (err) {
+      alert("Failed to submit report.");
+    }
+  };
+
   return (
     <main style={{ backgroundColor: '#fcfaf9', minHeight: '100vh', paddingBottom: '60px' }}>
       <div className="container" style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 20px' }}>
@@ -186,35 +201,77 @@ const Browse = () => {
                 gap: '25px', 
                 marginTop: '30px' 
               }}>
-                {materials.map((m) => (
-                  <div key={m.id} style={{ background: 'white', padding: '28px', borderRadius: '20px', border: '1px solid #f0edeb', display: 'flex', flexDirection: 'column', height: '380px', boxShadow: '0 4px 6px rgba(0,0,0,0.02)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
-                      <span style={{ fontSize: '11px', fontWeight: '700', color: '#2196f3', background: '#e3f2fd', padding: '5px 12px', borderRadius: '8px', textTransform: 'uppercase' }}>{m.category}</span>
-                      <button onClick={() => handleBookmarkToggle(m.id)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill={m.isBookmarked ? "#e74c3c" : "none"} stroke={m.isBookmarked ? "#e74c3c" : "#b0a4a2"} strokeWidth="2.5">
-                          <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
-                        </svg>
-                      </button>
-                    </div>
-                    <div style={{ flexGrow: 1 }}>
-                      <h3 style={{ fontSize: '1.5rem', fontWeight: '700', color: '#2d1b18', marginBottom: '8px' }}>{m.title}</h3>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
-                        <span style={{ color: '#f1c40f', fontWeight: 'bold' }}>⭐ {m.avg_rating > 0 ? m.avg_rating.toFixed(1) : 'New'}</span>
-                        <span style={{ color: '#b0a4a2' }}>• By {m.author || 'Anonymous'}</span>
+                                {materials.map((m) => (
+                    <div key={m.id} style={{ background: 'white', padding: '28px', borderRadius: '20px', border: '1px solid #f0edeb', display: 'flex', flexDirection: 'column', height: '380px', boxShadow: '0 4px 6px rgba(0,0,0,0.02)' }}>
+                      
+                      {/* CLEANED TOP ACTION BAR */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                        <span style={{ fontSize: '11px', fontWeight: '700', color: '#2196f3', background: '#e3f2fd', padding: '5px 12px', borderRadius: '8px', textTransform: 'uppercase' }}>
+                          {m.category}
+                        </span>
+                        
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          {/* IMPROVED REPORT BUTTON */}
+                          <button 
+                            onClick={() => handleReport(m.id)} 
+                            title="Report this material"
+                            style={{ 
+                              display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', 
+                              color: '#b0a4a2', background: '#f5f2f0', border: 'none', 
+                              padding: '5px 10px', borderRadius: '6px', cursor: 'pointer', 
+                              fontWeight: '600', transition: '0.2s all ease'
+                            }}
+                            onMouseOver={(e) => {
+                              e.currentTarget.style.color = '#e74c3c';
+                              e.currentTarget.style.background = '#fdecea';
+                            }}
+                            onMouseOut={(e) => {
+                              e.currentTarget.style.color = '#b0a4a2';
+                              e.currentTarget.style.background = '#f5f2f0';
+                            }}
+                          >
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path>
+                              <line x1="4" y1="22" x2="4" y2="15"></line>
+                            </svg>
+                            Report
+                          </button>
+
+                          {/* BOOKMARK BUTTON */}
+                          <button 
+                            onClick={() => handleBookmarkToggle(m.id)} 
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', padding: '4px', borderRadius: '50%', transition: '0.2s' }}
+                            onMouseOver={(e) => e.currentTarget.style.background = '#f5f2f0'}
+                            onMouseOut={(e) => e.currentTarget.style.background = 'none'}
+                          >
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill={m.isBookmarked ? "#e74c3c" : "none"} stroke={m.isBookmarked ? "#e74c3c" : "#b0a4a2"} strokeWidth="2.5">
+                              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+                            </svg>
+                          </button>
+                        </div>
                       </div>
-                      <p style={{ color: '#5c4d4a', fontSize: '0.95rem', lineHeight: '1.6', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: '3', WebkitBoxOrient: 'vertical' }}>
-                        {m.description}
-                      </p>
-                    </div>
-                    <div style={{ borderTop: '1px solid #f5f2f0', paddingTop: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: '0.85rem', color: '#b0a4a2' }}>📥 {m.download_count || 0} views</span>
-                      <div style={{ display: 'flex', gap: '8px' }}>
-                        <button onClick={() => { setSelectedMaterialId(m.id); setShowRateModal(true); }} style={{ padding: '8px 14px', borderRadius: '10px', border: '1px solid #e0dcd9', background: 'white', color: '#5d4037', cursor: 'pointer' }}>Rate</button>
-                        <button onClick={() => handleDownload(m.id, m.file_url)} style={{ padding: '8px 18px', borderRadius: '10px', border: 'none', background: '#5d4037', color: 'white', cursor: 'pointer' }}>Download</button>
+
+                      {/* REST OF CARD CONTENT */}
+                      <div style={{ flexGrow: 1 }}>
+                        <h3 style={{ fontSize: '1.5rem', fontWeight: '700', color: '#2d1b18', marginBottom: '8px' }}>{m.title}</h3>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
+                          <span style={{ color: '#f1c40f', fontWeight: 'bold' }}>⭐ {m.avg_rating > 0 ? m.avg_rating.toFixed(1) : 'New'}</span>
+                          <span style={{ color: '#b0a4a2' }}>• By {m.author || 'Anonymous'}</span>
+                        </div>
+                        <p style={{ color: '#5c4d4a', fontSize: '0.95rem', lineHeight: '1.6', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: '3', WebkitBoxOrient: 'vertical' }}>
+                          {m.description}
+                        </p>
+                      </div>
+                      
+                      <div style={{ borderTop: '1px solid #f5f2f0', paddingTop: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: '0.85rem', color: '#b0a4a2' }}>📥 {m.download_count || 0} views</span>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <button onClick={() => { setSelectedMaterialId(m.id); setShowRateModal(true); }} style={{ padding: '8px 14px', borderRadius: '10px', border: '1px solid #e0dcd9', background: 'white', color: '#5d4037', cursor: 'pointer' }}>Rate</button>
+                          <button onClick={() => handleDownload(m.id, m.file_url)} style={{ padding: '8px 18px', borderRadius: '10px', border: 'none', background: '#5d4037', color: 'white', cursor: 'pointer' }}>Download</button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
               </div>
             ) : (
               /* EMPTY STATE LOGIC */
