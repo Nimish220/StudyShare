@@ -3,10 +3,15 @@ import { Navigate, useLocation } from 'react-router-dom';
 
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem('token');
+  const user = localStorage.getItem('studyshare_user');
   const location = useLocation(); // This captures where the user was trying to go
 
-  if (!token) {
-    // We redirect to login and pass the current location in the 'state'
+  const isAuthenticated = token && token !== 'undefined' && token !== 'null' && user;
+
+  if (!isAuthenticated) {
+    // If it's a zombie (fake string), clear it out
+    if (token) localStorage.clear();
+    
     return <Navigate to="/login" replace state={{ from: location }} />;
   }
 

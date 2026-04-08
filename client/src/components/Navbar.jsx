@@ -6,9 +6,8 @@ const Navbar = () => {
   const user = userString ? JSON.parse(userString) : null;
 
   const handleLogout = () => {
-    localStorage.removeItem('studyshare_user');
-    localStorage.removeItem('token');
-    window.location.href = '/'; 
+    localStorage.clear();
+    window.location.href = '/login'; 
   };
 
   return (
