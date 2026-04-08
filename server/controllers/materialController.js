@@ -13,7 +13,7 @@ exports.getApprovedMaterials = async (req, res) => {
                 u.username AS author,
                 IFNULL(AVG(r.rating), 0) AS avg_rating,
                 COUNT(DISTINCT r.id) AS review_count,
-                CASE WHEN b.id IS NOT NULL THEN true ELSE false END AS isBookmarked
+                CASE WHEN b.material_id IS NOT NULL THEN 1 ELSE 0 END AS isBookmarked
             FROM materials m 
             JOIN users u ON m.uploader_id = u.id 
             LEFT JOIN reviews r ON m.id = r.material_id
@@ -128,11 +128,17 @@ exports.getUserBookmarks = async (req, res) => {
     try {
         const user_id = req.user.id;
         const sql = `
-            SELECT m.*, u.username as author, 1 as isBookmarked
+            SELECT 
+                m.*, 
+                u.username AS author, 
+                1 AS isBookmarked,
+                IFNULL(AVG(r.rating), 0) AS avg_rating
             FROM materials m
             JOIN bookmarks b ON m.id = b.material_id
             JOIN users u ON m.uploader_id = u.id
+            LEFT JOIN reviews r ON m.id = r.material_id
             WHERE b.user_id = ?
+            GROUP BY m.id
         `;
         const [bookmarks] = await db.query(sql, [user_id]);
         res.json(bookmarks);

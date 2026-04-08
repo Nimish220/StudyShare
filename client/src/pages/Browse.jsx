@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-
+import { useLocation } from 'react-router-dom';
 const allCategories = [
   'All', 'Computer Science', 'Mathematics', 'Chemistry', 'Physics', 
   'Biology', 'History', 'Economics', 'Literature', 'Business', 
@@ -11,14 +11,19 @@ const Browse = () => {
   const [materials, setMaterials] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
-  const [viewMode, setViewMode] = useState('explore'); 
+  const location = useLocation();
+  const [viewMode, setViewMode] = useState(location.state?.view || 'explore'); 
   const [loading, setLoading] = useState(false);
-
   const [showRateModal, setShowRateModal] = useState(false);
   const [selectedMaterialId, setSelectedMaterialId] = useState(null);
   const [userRating, setUserRating] = useState(5);
   const [userComment, setUserComment] = useState('');
 
+  useEffect(() => {
+    if (location.state?.view) {
+      setViewMode(location.state.view);
+    }
+  }, [location.state]);
   const token = localStorage.getItem('token');
   const user = JSON.parse(localStorage.getItem('studyshare_user'));
   const headers = { Authorization: `Bearer ${token}` };
@@ -37,7 +42,7 @@ const Browse = () => {
 
       const formattedData = res.data.map(item => ({
         ...item,
-        isBookmarked: Boolean(item.isBookmarked),
+        isBookmarked: Number(item.isBookmarked) === 1,
         avg_rating: parseFloat(item.avg_rating) || 0 
       }));
 
@@ -53,10 +58,31 @@ const Browse = () => {
     fetchMaterials();
   }, [activeCategory, viewMode]);
 
-  const handleBookmarkToggle = (id) => {
-    if (!token) return alert("Login to bookmark!");
-    setMaterials(prev => prev.map(m => m.id === id ? { ...m, isBookmarked: !m.isBookmarked } : m));
-  };
+  const handleBookmarkToggle = async (id) => {
+  if (!token) return alert("Login to bookmark!");
+
+  try {
+    // Send the request to the backend
+    const res = await axios.post(
+      'http://localhost:5001/api/materials/bookmark', 
+      { material_id: id }, 
+      { headers }
+    );
+
+    // Update the UI locally so it feels fast
+    setMaterials(prev => 
+      prev.map(m => m.id === id ? { ...m, isBookmarked: res.data.isBookmarked } : m)
+    );
+    if (res.data.isBookmarked) {
+      alert("Material Bookmarked!");
+    } else {
+      alert("Bookmark Removed!");
+    }
+  } catch (err) {
+    console.error("Bookmark Error:", err);
+    alert("Could not update bookmark.");
+  }
+};
 
   const handleDownload = async (id, fileUrl) => {
     try {
