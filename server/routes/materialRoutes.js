@@ -1,0 +1,24 @@
+const express = require('express');
+const router = express.Router();
+const materialController = require('../controllers/materialController');
+const reviewController = require('../controllers/reviewController');
+const { verifyToken } = require('../middleware/authMiddleware');
+
+// Public Explore: Students search for approved notes
+router.get('/explore', verifyToken, materialController.getApprovedMaterials);
+
+// Increment Stat: Call this via axios when the download button is clicked 
+router.patch('/download/:id', materialController.trackDownload);
+// User sees their own history 
+router.get('/my-uploads', verifyToken, materialController.getMyMaterials);
+
+// Public route to see reviews
+router.get('/:id/reviews', reviewController.getMaterialReviews);
+
+// Protected route to post a review
+router.post('/rate', verifyToken, reviewController.addReview);
+
+router.post('/bookmark', verifyToken, materialController.toggleBookmark); 
+router.get('/bookmarks', verifyToken, materialController.getUserBookmarks);
+router.post('/report', verifyToken, materialController.reportMaterial);
+module.exports = router;

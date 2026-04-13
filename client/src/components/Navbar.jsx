@@ -2,13 +2,12 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 
 const Navbar = () => {
-  // Logic from script.js: Retrieve the user object from localStorage
   const userString = localStorage.getItem('studyshare_user');
   const user = userString ? JSON.parse(userString) : null;
 
   const handleLogout = () => {
-    localStorage.removeItem('studyshare_user');
-    window.location.href = '/'; // Matches the behavior in your team's script
+    localStorage.clear();
+    window.location.href = '/login'; 
   };
 
   return (
@@ -21,44 +20,49 @@ const Navbar = () => {
           <span>StudyShare</span>
         </Link>
         
-        <div className="nav-links" id="nav-links">
-          {(!user || user.role === 'user') ? (
-            <>
-              <Link to="/">Home</Link>
-              <Link to="/browse">Browse</Link>
-              {user && <Link to="/upload">Upload</Link>}
-              {user && <Link to="/dashboard">Dashboard</Link>}
-            </>
-          ) : user.role === 'admin' ? (
-            <>
-              <Link to="/admin">Dashboard</Link>
-              <Link to="/browse">Manage Content</Link>
-            </>
-          ) : (
-            <>
-              <Link to="/superadmin">Dashboard</Link>
-              <Link to="/admin">Manage Users</Link>
-            </>
-          )}
-        </div>
+        <div className="nav-links">
+        <Link to="/">Home</Link>
 
-        <div className="nav-auth" id="nav-auth">
+        {/* STUDENT: Needs Browse to find new notes */}
+        {user?.role === 'student' && (
+          <>
+            <Link to="/browse">Browse</Link> {/* This points to ExplorePage */}
+            <Link to="/upload">Upload</Link>
+            <Link to="/dashboard">Dashboard</Link>
+          </>
+        )}
+
+        {/* ADMIN: Usually manages content via the Admin Dashboard, 
+            but can have Browse for quick viewing */}
+        {user?.role === 'admin' && (
+          <>
+            <Link to="/admin">Dashboard</Link>
+            <Link to="/admin?tab=content">Manage Content</Link>
+          </>
+        )}
+
+        {/* SUPERADMIN: Usually focuses on users, but can have a link if needed */}
+        {user?.role === 'superadmin' && (
+          <>
+            <Link to="/superadmin">Dashboard</Link>
+            <Link to="/superadmin?tab=manage-users">Manage Users</Link>
+            <Link to="/browse">Browse All</Link>
+          </>
+        )}
+      
+        {/* GUEST: Needs to see what's available to be convinced to sign up */}
+        {!user && <Link to="/browse">Browse</Link>}
+      </div>
+        <div className="nav-auth">
           {user ? (
             <>
-              {/* This replaces the static 'user' with the actual logged-in username */}
               <span className="nav-user-info">
-                {user.name} <span className="role-badge">({user.role})</span>
+                {user.username || user.name} 
+                <span className="role-badge" style={{ marginLeft: '8px', fontSize: '0.75rem', padding: '2px 8px', borderRadius: '12px', background: 'rgba(255,255,255,0.1)' }}>
+                  {user.role}
+                </span>
               </span>
-              <button 
-                onClick={handleLogout} 
-                className="btn btn-ghost btn-sm" 
-                style={{display:'flex', alignItems:'center', gap:'0.25rem'}}
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-                  <polyline points="16 17 21 12 16 7"/>
-                  <line x1="21" y1="12" x2="9" y2="12"/>
-                </svg>
+              <button onClick={handleLogout} className="btn btn-ghost btn-sm">
                 Logout
               </button>
             </>
@@ -69,18 +73,6 @@ const Navbar = () => {
             </>
           )}
         </div>
-
-        <button className="hamburger" id="hamburger" aria-label="Menu">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <line x1="3" y1="6" x2="21" y2="6"/>
-            <line x1="3" y1="12" x2="21" y2="12"/>
-            <line x1="3" y1="18" x2="21" y2="18"/>
-          </svg>
-        </button>
-      </div>
-
-      <div className="mobile-menu" id="mobile-menu">
-        {/* Mobile items would be rendered here via state if needed */}
       </div>
     </nav>
   );

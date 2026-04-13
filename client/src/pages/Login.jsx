@@ -1,44 +1,64 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-
+import { useNavigate,useLocation, Link } from 'react-router-dom';
+import axios from 'axios';
 const Login = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [selectedRole, setSelectedRole] = useState('user');
-  // State to toggle password visibility
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
 
-    // 1. Create a lookup for the specific names from your project requirements
-    const USERS_DB = {
-      'admin@test.com': 'Anonymous',
-      'user@test.com': 'User123',
-      'superadmin@test.com': 'SuperAdmin'
-    };
+    try {
+      const response = await axios.post('http://localhost:5001/api/auth/login', {
+        email,
+        password
+      });
 
-    // 2. Find the name based on the email entered
-    // If the email isn't in our list, it falls back to the email prefix
-    const displayName = USERS_DB[email.toLowerCase()] || email.split('@')[0];
+      // 1. SAVE THE REAL TOKEN
+      localStorage.setItem('token', response.data.token);
 
-    const userData = {
-      name: displayName, // This is what the Navbar and Dashboard will show
-      email: email,
-      role: selectedRole
-    };
-
-    // 3. Save to localStorage
-    localStorage.setItem('studyshare_user', JSON.stringify(userData));
-
-    // 4. Redirect based on role
-    if (selectedRole === 'admin') navigate('/admin');
-    else if (selectedRole === 'superadmin') navigate('/superadmin');
-    else navigate('/dashboard');
-    
-    // 5. Refresh to update the Navbar immediately
-    window.location.reload();
+      // 2. USE THE ROLE FROM DATABASE (not the selectedRole state)
+      const dbRole = response.data.user.role; 
+      const userData = {
+        username: response.data.user.username || email.split('@')[0],
+        email: email,
+        role: dbRole // Always trust the DB role
+      };
+      localStorage.setItem('studyshare_user', JSON.stringify(userData));
+      const destination = location.state?.from?.pathname;
+      
+      if (destination === '/browse') {
+      navigate('/browse');
+      } 
+      // 2. If they were going to /upload but they are an Admin, force them to the Dashboard
+      else if (destination === '/upload' && (dbRole === 'admin' || dbRole === 'superadmin')) {
+              navigate(dbRole === 'superadmin' ? '/superadmin' : '/admin');
+      }
+      // 3. If it's a regular student going to /upload, let them go
+      else if (destination === '/upload' && dbRole === 'user') {
+              navigate('/upload');
+      }
+      else {
+        // 3. ROLE-BASED NAVIGATION
+        if (dbRole === 'superadmin') {
+          navigate('/superadmin');
+        } else if (dbRole === 'admin') {
+          navigate('/admin'); // Or '/admin-dashboard' depending on your route name
+        } else {
+          navigate('/dashboard');
+        }
+      }
+      // 4. Refresh to update the Navbar/Auth state
+     setTimeout(() => {
+        window.location.reload();
+      }, 100);
+    } catch (err) {
+      alert(err.response?.data?.message || "Login failed. Please check your credentials.");
+    }
   };
 
   return (
