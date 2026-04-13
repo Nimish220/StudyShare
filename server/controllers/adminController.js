@@ -157,17 +157,22 @@ exports.getReportedMaterials = async (req, res) => {
     }
 };
 
-// Admin action: Clear reports (dismiss) or Reject (remove from browse)
 exports.handleReportAction = async (req, res) => {
     try {
-        const { material_id, action } = req.body; // action: 'dismiss' or 'reject'
+        const { material_id, action } = req.body;
+        const adminId = req.user.id;
+
+        // Fetch material title for the log
+        const [[material]] = await db.query("SELECT title FROM materials WHERE id = ?", [material_id]);
 
         if (action === 'dismiss') {
             await db.query("UPDATE materials SET report_count = 0 WHERE id = ?", [material_id]);
-            return res.json({ message: "Reports cleared. Material is now safe." });
+            await superAdminController.logAction(`Admin cleared reports for "${material.title}"`, adminId);
+            return res.json({ message: "Reports cleared." });
         } else if (action === 'reject') {
             await db.query("UPDATE materials SET status = 'rejected', report_count = 0 WHERE id = ?", [material_id]);
-            return res.json({ message: "Material rejected and removed from library." });
+            await superAdminController.logAction(`Admin REJECTED flagged material: "${material.title}"`, adminId);
+            return res.json({ message: "Material removed." });
         }
     } catch (err) {
         res.status(500).json({ error: err.message });

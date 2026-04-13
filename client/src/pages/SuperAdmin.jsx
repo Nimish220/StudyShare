@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation,useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { 
   Users, ShieldCheck, FileText, Download, Activity, 
@@ -14,10 +14,11 @@ import {
 const SuperAdmin = () => {
   const location = useLocation();
   const [activeTab, setActiveTab] = useState('tab-overview');
+  const navigate = useNavigate();
   const [adminUser, setAdminUser] = useState({ username: 'Super Admin' });
   const [users, setUsers] = useState([]);
   const [stats, setStats] = useState({
-    totalUsers: 0, activeAdmins: 0, totalMaterials: 0, totalDownloads: 0, recentActivity: []
+    totalUsers: 0, activeAdmins: 0, totalMaterials: 0, totalDownloads: 0,flaggedCount: 0, recentActivity: []
   });
   
   // --- STATE MANAGEMENT ---
@@ -28,7 +29,7 @@ const SuperAdmin = () => {
   const [showLogsModal, setShowLogsModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newUser, setNewUser] = useState({ username: '', email: '', password: '', role: 'student' });
-
+  const [reportedMaterials, setReportedMaterials] = useState([]);
   const [loading, setLoading] = useState(false);
   const [highlightAction, setHighlightAction] = useState(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -44,6 +45,15 @@ const SuperAdmin = () => {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+  
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const tabParam = params.get('tab');
+    if (tabParam === 'manage-users') setActiveTab('tab-manage-users');
+    else if (tabParam === 'moderation') setActiveTab('tab-moderation');
+    else if (tabParam === 'analytics') setActiveTab('tab-analytics');
+    else setActiveTab('tab-overview');
+  }, [location]);
 
   const fetchSuperDashboardData = useCallback(async () => {
     const token = localStorage.getItem('token');
@@ -53,10 +63,12 @@ const SuperAdmin = () => {
     try {
       const [statsRes, usersRes] = await Promise.all([
         axios.get('http://localhost:5001/api/super/stats', { headers }),
-        axios.get('http://localhost:5001/api/super/users', { headers })
+        axios.get('http://localhost:5001/api/super/users', { headers }),
+        axios.get('http://localhost:5001/api/admin/reported-materials', { headers })
       ]);
       setStats(statsRes.data);
       setUsers(usersRes.data);
+      setReportedMaterials(reportedRes.data);
     } catch (err) { console.error("Fetch Error:", err); }
     finally { setTimeout(() => setLoading(false), 600); }
   }, []);
@@ -65,8 +77,7 @@ const SuperAdmin = () => {
   const filteredUsers = useMemo(() => {
     return users.filter(u => {
       const matchesRole = roleFilter === 'all' || u.role === roleFilter;
-      const matchesSearch = u.username.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                           u.email.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesSearch = u.username.toLowerCase().includes(searchQuery.toLowerCase()) || u.email.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesRole && matchesSearch;
     });
   }, [users, roleFilter, searchQuery]);
@@ -117,6 +128,20 @@ const SuperAdmin = () => {
       } catch (err) { alert("Delete failed"); }
     }
   };
+    // 1. Add this handler function
+  const handleModeration = async (id, action) => {
+    const token = localStorage.getItem('token');
+    const confirmMsg = action === 'reject' ? "Reject and remove this content?" : "Dismiss all reports?";
+    if (!window.confirm(confirmMsg)) return;
+
+    try {
+      await axios.post('http://localhost:5001/api/admin/handle-report', 
+        { material_id: id, action }, 
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      fetchSuperDashboardData(); // Refresh everything
+    } catch (err) { alert("Moderation failed"); }
+  };
 
   return (
     <main style={{ backgroundColor: theme.bg, minHeight: '100vh', color: theme.text, fontFamily: 'serif', paddingBottom: '50px' }}>
@@ -140,16 +165,22 @@ const SuperAdmin = () => {
           <StatLine icon={<ShieldCheck />} label="Admins" value={stats.activeAdmins} theme={theme} />
           <StatLine icon={<FileText />} label="Materials" value={stats.totalMaterials} theme={theme} />
           <StatLine icon={<Download />} label="Downloads" value={stats.totalDownloads} theme={theme} />
+          <StatLine icon={<ShieldAlert color={stats.flaggedCount > 0 ? theme.danger : theme.success} />} label="Flagged" value={stats.flaggedCount || 0} theme={theme} />
         </div>
 
         {/* TABS */}
-        <div style={{ display: 'flex', gap: '25px', borderBottom: `1px solid ${theme.accent}`, marginBottom: '25px', overflowX: 'auto' }}>
-          {['Overview', 'Manage Users', 'Analytics'].map(tab => (
-            <button key={tab} onClick={() => setActiveTab(`tab-${tab.toLowerCase().replace(' ', '-')}`)}
-              style={{ padding: '12px 5px', border: 'none', background: 'none', cursor: 'pointer', color: activeTab.includes(tab.toLowerCase().replace(' ', '-')) ? theme.primary : theme.secondary, borderBottom: activeTab.includes(tab.toLowerCase().replace(' ', '-')) ? `2px solid ${theme.primary}` : 'none', fontWeight: 'bold', whiteSpace: 'nowrap' }}
-            >{tab}</button>
-          ))}
-        </div>
+      <div style={{ display: 'flex', gap: '25px', borderBottom: `1px solid ${theme.accent}`, marginBottom: '25px', overflowX: 'auto' }}>
+        {['Overview', 'Manage Users', 'Moderation', 'Analytics'].map(tab => ( // Added 'Moderation'
+          <button key={tab} onClick={() => setActiveTab(`tab-${tab.toLowerCase().replace(' ', '-')}`)}
+            style={{ 
+              padding: '12px 5px', border: 'none', background: 'none', cursor: 'pointer', 
+              color: activeTab.includes(tab.toLowerCase().replace(' ', '-')) ? theme.primary : theme.secondary, 
+              borderBottom: activeTab.includes(tab.toLowerCase().replace(' ', '-')) ? `2px solid ${theme.primary}` : 'none', 
+              fontWeight: 'bold', whiteSpace: 'nowrap' 
+            }}
+          >{tab}</button>
+        ))}
+      </div>
 
         {/* TAB 1: OVERVIEW */}
         {activeTab === 'tab-overview' && (
@@ -158,7 +189,7 @@ const SuperAdmin = () => {
               <h3 style={{ margin: '0 0 20px 0', fontSize: '1.1rem' }}><Settings size={18}/> Management Actions</h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <ControlBtn label="Create New User" icon={<UserPlus size={18}/>} theme={theme} onClick={() => setShowCreateModal(true)} primary />
-                <ControlBtn label="Manage Users" icon={<Users size={18}/>} theme={theme} onClick={() => setActiveTab('tab-manage-users')} />
+                <ControlBtn label="Manage Users" icon={<Users size={18}/>} theme={theme} onClick={() => navigate('/superadmin?tab=manage-users')} />
               </div>
             </div>
 
@@ -175,8 +206,37 @@ const SuperAdmin = () => {
             </div>
           </div>
         )}
-
-        {/* TAB 2: MANAGE USERS */}
+        
+        {activeTab === 'tab-moderation' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <h3 style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <ShieldAlert color={theme.danger} /> Material Moderation Queue
+            </h3>
+            {reportedMaterials.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '40px', background: theme.card, borderRadius: '12px' }}>
+                <CheckCircle2 size={48} color={theme.success} style={{ marginBottom: '10px', margin: '0 auto' }} />
+                <p>No materials currently flagged. System is clean!</p>
+              </div>
+            ) : (
+              reportedMaterials.map(m => (
+                <div key={m.id} style={{ background: theme.white, padding: '20px', borderRadius: '12px', border: `1px solid ${theme.accent}`, display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '15px' }}>
+                  <div>
+                    <div style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>{m.title}</div>
+                    <div style={{ color: theme.danger, fontWeight: 'bold', fontSize: '0.85rem' }}>🚩 {m.report_count} Reports</div>
+                    <div style={{ fontSize: '0.8rem', color: theme.secondary }}>Uploaded by: {m.uploader_name || m.author}</div>
+                  </div>
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <button onClick={() => window.open(`http://localhost:5001/${m.file_url}`)} style={btnStyle(theme.primary)}>View</button>
+                    <button onClick={() => handleModeration(m.id, 'dismiss')} style={btnStyle(theme.success)}>Dismiss</button>
+                    <button onClick={() => handleModeration(m.id, 'reject')} style={{ ...btnStyle(theme.danger), background: theme.danger, color: 'white' }}>Remove</button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+        
+        {/* --- TAB 3: MANAGE USERS WRAPPER --- */}
         {activeTab === 'tab-manage-users' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px', alignItems: 'center', background: theme.card, padding: '15px', borderRadius: '12px' }}>
@@ -205,7 +265,6 @@ const SuperAdmin = () => {
                   <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                     <span style={{ padding: '4px 10px', borderRadius: '20px', fontSize: '0.7rem', fontWeight: 'bold', background: theme.accent }}>{u.role.toUpperCase()}</span>
                     
-                    {/* ROLE TOGGLES */}
                     {u.role === 'student' && <button onClick={() => handleUpdateRole(u.id, 'admin')} style={btnStyle(theme.primary)}>Make Admin</button>}
                     {u.role === 'admin' && (
                       <>
@@ -216,10 +275,10 @@ const SuperAdmin = () => {
                     {u.role === 'superadmin' && u.id !== adminUser.id && (
                         <button 
                           onClick={() => handleUpdateRole(u.id, 'admin')} 
-                          disabled={stats.totalSuperAdmins <= 1} // Prevent revoking if only 1 exists
+                          disabled={stats.totalSuperAdmins <= 1}
                           style={stats.totalSuperAdmins <= 1 ? btnDisabledStyle : btnStyle(theme.secondary)}
                         >
-                          {stats.totalSuperAdmins <= 1 ? "Minimum 1 Super Required" : "Revoke Super"}
+                          {stats.totalSuperAdmins <= 1 ? "Min 1 Super Required" : "Revoke Super"}
                         </button>
                       )}
                     <button onClick={() => handleDeleteUser(u.id)} style={{ color: theme.danger, border: 'none', background: 'none', cursor: 'pointer' }}><Trash2 size={18}/></button>
@@ -238,12 +297,11 @@ const SuperAdmin = () => {
           </div>
         )}
 
+        {/* --- TAB 4: ANALYTICS WRAPPER --- */}
         {activeTab === 'tab-analytics' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
-              
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '20px' }}>
                 
-                {/* CHART 1: USER DISTRIBUTION */}
                 <div style={{ background: theme.card, padding: '20px', borderRadius: '16px', border: `1px solid ${theme.accent}`, height: '350px' }}>
                   <h3 style={{ margin: '0 0 15px 0', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <Users size={18}/> User Composition
@@ -255,10 +313,7 @@ const SuperAdmin = () => {
                           { name: 'Students', value: stats.totalUsers - stats.activeAdmins },
                           { name: 'Admins', value: stats.activeAdmins },
                         ]}
-                        innerRadius={60}
-                        outerRadius={80}
-                        paddingAngle={5}
-                        dataKey="value"
+                        innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value"
                       >
                         <Cell fill={theme.accent} />
                         <Cell fill={theme.primary} />
@@ -269,7 +324,6 @@ const SuperAdmin = () => {
                   </ResponsiveContainer>
                 </div>
 
-                {/* CHART 2: SYSTEM USAGE */}
                 <div style={{ background: theme.card, padding: '20px', borderRadius: '16px', border: `1px solid ${theme.accent}`, height: '350px' }}>
                   <h3 style={{ margin: '0 0 15px 0', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <Activity size={18}/> System Activity
@@ -287,25 +341,9 @@ const SuperAdmin = () => {
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
-
-              </div>
-
-              {/* GROWTH SUMMARY FOOTER */}
-              <div style={{ background: theme.primary, color: theme.white, padding: '20px', borderRadius: '12px', display: 'flex', justifyContent: 'space-around', alignItems: 'center', flexWrap: 'wrap', gap: '20px' }}>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: '0.8rem', opacity: 0.8 }}>Engagement Rate</div>
-                  <div style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>
-                    {stats.totalUsers > 0 ? (stats.totalDownloads / stats.totalUsers).toFixed(1) : 0} pts
-                  </div>
-                </div>
-                <div style={{ width: '1px', height: '30px', background: theme.white, opacity: 0.3 }} className="hidden-mobile"></div>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: '0.8rem', opacity: 0.8 }}>Total Resources</div>
-                  <div style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>{stats.totalMaterials} Units</div>
-                </div>
               </div>
             </div>
-          )}
+        )}
       </div>
 
       {/* MODAL: CREATE USER */}
@@ -339,14 +377,26 @@ const SuperAdmin = () => {
               <h2>Full Activity Audit</h2>
               <X onClick={() => setShowLogsModal(false)} style={{ cursor: 'pointer' }}/>
             </div>
-            <div style={{ maxHeight: '60vh', overflowY: 'auto' }}>
-              {stats.recentActivity?.map((act, i) => (
-                <div key={i} style={{ padding: '15px 0', borderBottom: `1px solid ${theme.accent}` }}>
-                  <div style={{ fontWeight: 'bold' }}>{act.log_text}</div>
-                  <div style={{ fontSize: '0.8rem', color: theme.secondary }}>{act.time_ago}</div>
-                </div>
-              ))}
-            </div>
+              <div style={{ maxHeight: '60vh', overflowY: 'auto' }}>
+                {stats.recentActivity?.map((act, i) => {
+                  const isRejected = act.log_text.includes('REJECTED');
+                  const isCleared = act.log_text.includes('cleared reports');
+                  
+                  return (
+                    <div key={i} style={{ padding: '15px 0', borderBottom: `1px solid ${theme.accent}`, display: 'flex', gap: '15px', alignItems: 'center' }}>
+                      {(isRejected || isCleared) ? (
+                        <ShieldAlert size={18} color={isRejected ? theme.danger : theme.success} />
+                      ) : (
+                        <Activity size={16} color={theme.primary} />
+                      )}
+                      <div>
+                        <div style={{ fontWeight: 'bold', fontSize: '0.95rem' }}>{act.log_text}</div>
+                        <div style={{ fontSize: '0.8rem', color: theme.secondary }}>{act.time_ago}</div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
           </div>
         </div>
       )}

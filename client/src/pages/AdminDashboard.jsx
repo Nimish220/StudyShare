@@ -106,7 +106,7 @@ const AdminDashboard = () => {
       <div style={{ display: 'flex', gap: '10px', marginTop: '10px', flexWrap: 'wrap' }}>
         {onView && <button onClick={onView} style={{ flex: 1, padding: '8px', borderRadius: '6px', border: `1px solid ${palette.accent}`, color: palette.accent, background: 'none', cursor: 'pointer' }}>View</button>}
         {!hideAction && <button onClick={onAction} style={{ flex: 1, padding: '8px', borderRadius: '6px', border: 'none', background: actionColor, color: 'white', cursor: 'pointer' }}>{actionLabel}</button>}
-        {onSecondaryAction && <button onClick={onSecondaryAction} style={{ flex: '1 1 100%', padding: '8px', borderRadius: '6px', border: 'none', background: secondaryColor, color: 'white', cursor: 'pointer' }}>{secondaryActionLabel}</button>}
+        {onSecondaryAction && <button onClick={onSecondaryAction} style={{ flex: '1 1 100%', padding: '8px', borderRadius: '6px', border: 'none', background: secondaryColor || palette.success, color: 'white', cursor: 'pointer' }}>{secondaryActionLabel}</button>}
       </div>
     </div>
   );

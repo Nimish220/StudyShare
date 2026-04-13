@@ -13,6 +13,7 @@ exports.getSuperStats = async (req, res) => {
         const [userCount] = await db.query("SELECT COUNT(*) as total FROM users");
         const [adminCount] = await db.query("SELECT COUNT(*) as total FROM users WHERE role = 'admin'");
         const [superCount] = await db.query("SELECT COUNT(*) as total FROM users WHERE role = 'superadmin'");
+        const [reportCount] = await db.query("SELECT COUNT(*) as total FROM materials WHERE report_count > 0");
         const [materialCount] = await db.query("SELECT COUNT(*) as total FROM materials");
         const [downloadCount] = await db.query("SELECT SUM(download_count) as total FROM materials");
         
@@ -20,13 +21,14 @@ exports.getSuperStats = async (req, res) => {
         const [logs] = await db.query(`
             SELECT action_text as log_text, created_at as time_stamp 
             FROM system_logs 
-            ORDER BY created_at DESC LIMIT 6
+            ORDER BY created_at DESC LIMIT 50
         `);
 
         res.json({
             totalUsers: userCount[0].total || 0,
             activeAdmins: adminCount[0].total || 0,
             totalSuperAdmins: superCount[0].total || 0,
+            flaggedCount: reportCount[0].total || 0,
             totalMaterials: materialCount[0].total || 0,
             totalDownloads: downloadCount[0].total || 0,
             recentActivity: logs.map(l => ({
