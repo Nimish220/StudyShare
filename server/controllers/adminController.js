@@ -140,3 +140,36 @@ exports.getSystemLogs = async (req, res) => {
         res.status(500).json({ error: "Failed to fetch logs" });
     }
 };
+// Get all materials with at least 1 report
+exports.getReportedMaterials = async (req, res) => {
+    try {
+        const sql = `
+            SELECT m.*, u.username as uploader_name 
+            FROM materials m 
+            JOIN users u ON m.uploader_id = u.id 
+            WHERE m.report_count > 0 
+            ORDER BY m.report_count DESC
+        `;
+        const [materials] = await db.query(sql);
+        res.json(materials);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+// Admin action: Clear reports (dismiss) or Reject (remove from browse)
+exports.handleReportAction = async (req, res) => {
+    try {
+        const { material_id, action } = req.body; // action: 'dismiss' or 'reject'
+
+        if (action === 'dismiss') {
+            await db.query("UPDATE materials SET report_count = 0 WHERE id = ?", [material_id]);
+            return res.json({ message: "Reports cleared. Material is now safe." });
+        } else if (action === 'reject') {
+            await db.query("UPDATE materials SET status = 'rejected', report_count = 0 WHERE id = ?", [material_id]);
+            return res.json({ message: "Material rejected and removed from library." });
+        }
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};

@@ -10,4 +10,6 @@ router.get('/users', verifyToken, isAdmin, adminController.getAllUsers);
 router.get('/logs', verifyToken, isAdmin, adminController.getSystemLogs);
 router.put('/approve/:id', verifyToken, isAdmin, adminController.approveMaterial);
 router.delete('/material/:id', verifyToken, isAdmin, adminController.deleteMaterial);
+router.get('/reported-materials', verifyToken, isAdmin, adminController.getReportedMaterials);
+router.post('/handle-report', verifyToken, isAdmin, adminController.handleReportAction);
 module.exports = router;
