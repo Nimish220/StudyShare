@@ -1,36 +1,39 @@
+# 1. Dependencies
 node_modules/
 client/node_modules/
-server/uploads/
+server/node_modules/
+
+# 2. Environment Variables (Security)
+.env
+.env.local
+.env.*
+client/.env
+server/.env
+# This covers the common mistakes:
+.env* # 3. Production Builds
 dist/
+dist-ssr/
 build/
-# Logs
+out/
+
+# 4. Uploads & Temporary Files
+server/uploads/
+# Prevent accidental PDF/Image pushes from local testing
+*.pdf
+*.jpg
+*.png
+
+# 5. Logs
 logs
 *.log
 npm-debug.log*
 yarn-debug.log*
-yarn-error.log*
 pnpm-debug.log*
-lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
-
-# Editor directories and files
-.vscode/*
+# 6. Editor & System Files
+.vscode/
 !.vscode/extensions.json
-.idea
+.idea/
 .DS_Store
 *.suo
-*.ntvs*
-*.njsproj
-*.sln
 *.sw?
-.env
-.env client
-.env server
-node_modules/
-dist/
-build/
-server/uploads/
