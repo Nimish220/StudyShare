@@ -1,11 +1,8 @@
-<<<<<<< HEAD
-=======
 node_modules/
 client/node_modules/
 server/uploads/
 dist/
 build/
->>>>>>> study_share
 # Logs
 logs
 *.log
