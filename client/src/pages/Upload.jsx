@@ -45,7 +45,7 @@ const Upload = () => {
 
     try {
       const token = localStorage.getItem('token'); 
-      await axios.post('http://localhost:5001/api/materials/upload', data, {
+      await axios.post(`${import.meta.env.VITE_API_URL}/api/materials/upload`, data, {
         headers: { 'Content-Type': 'multipart/form-data', 'Authorization': `Bearer ${token}` }
       });
       alert("Success! Your material is now pending review.");

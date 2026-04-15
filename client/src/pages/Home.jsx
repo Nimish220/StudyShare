@@ -27,7 +27,7 @@ const Home = () => {
     const fetchPopular = async () => {
       try {
         // We call the explore API but limit it to the top 8
-        const res = await axios.get('http://localhost:5001/api/materials/explore', {
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/materials/explore`, {
           params: { limit: 8, sortBy: 'download_count' } 
         });
         setPopularMaterials(res.data.slice(0, 8));
@@ -53,8 +53,8 @@ const Home = () => {
 
   try {
     // This will now only work if the user has a valid JWT token
-    await axios.patch(`http://localhost:5001/api/materials/download/${id}`);
-    window.open(`http://localhost:5001/${fileUrl}`, '_blank');
+    await axios.patch(`${import.meta.env.VITE_API_URL}/api/materials/download/${id}`);
+    window.open(`${import.meta.env.VITE_API_URL}/${fileUrl}`, '_blank');
   } catch (err) {
     console.error("View failed:", err);
   }

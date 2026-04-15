@@ -32,8 +32,8 @@ const Browse = () => {
     setLoading(true);
     try {
       let url = viewMode === 'my-uploads' 
-        ? 'http://localhost:5001/api/materials/my-uploads' 
-        : 'http://localhost:5001/api/materials/explore';
+        ? `${import.meta.env.VITE_API_URL}/api/materials/my-uploads` 
+        : `${import.meta.env.VITE_API_URL}/api/materials/explore`;
 
       const res = await axios.get(url, {
         params: { search: searchQuery, category: activeCategory },
@@ -64,7 +64,7 @@ const Browse = () => {
   try {
     // Send the request to the backend
     const res = await axios.post(
-      'http://localhost:5001/api/materials/bookmark', 
+      `${import.meta.env.VITE_API_URL}/api/materials/bookmark`, 
       { material_id: id }, 
       { headers }
     );
@@ -86,15 +86,15 @@ const Browse = () => {
 
   const handleDownload = async (id, fileUrl) => {
     try {
-      await axios.patch(`http://localhost:5001/api/materials/download/${id}`);
-      window.open(`http://localhost:5001/${fileUrl}`, '_blank');
+      await axios.patch(`${import.meta.env.VITE_API_URL}/api/materials/download/${id}`);
+      window.open(`${import.meta.env.VITE_API_URL}/${fileUrl}`, '_blank');
       setMaterials(prev => prev.map(m => m.id === id ? { ...m, download_count: (m.download_count || 0) + 1 } : m));
     } catch (err) { console.error(err); }
   };
 
   const handleRateSubmit = async () => {
     try {
-      await axios.post('http://localhost:5001/api/materials/rate', {
+      await axios.post(`${import.meta.env.VITE_API_URL}/api/materials/rate`, {
         material_id: selectedMaterialId, rating: userRating, comment: userComment
       }, { headers });
       setShowRateModal(false);
@@ -107,7 +107,7 @@ const Browse = () => {
     if (!confirmReport) return;
 
     try {
-      await axios.post('http://localhost:5001/api/materials/report', 
+      await axios.post(`${import.meta.env.VITE_API_URL}/api/materials/report`, 
         { material_id: id }, 
         { headers }
       );

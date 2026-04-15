@@ -62,9 +62,9 @@ const SuperAdmin = () => {
     const headers = { Authorization: `Bearer ${token}` };
     try {
       const [statsRes, usersRes] = await Promise.all([
-        axios.get('http://localhost:5001/api/super/stats', { headers }),
-        axios.get('http://localhost:5001/api/super/users', { headers }),
-        axios.get('http://localhost:5001/api/admin/reported-materials', { headers })
+        axios.get(`${import.meta.env.VITE_API_URL}/api/super/stats`, { headers }),
+        axios.get(`${import.meta.env.VITE_API_URL}/api/super/users`, { headers }),
+        axios.get(`${import.meta.env.VITE_API_URL}/api/admin/reported-materials`, { headers })
       ]);
       setStats(statsRes.data);
       setUsers(usersRes.data);
@@ -102,7 +102,7 @@ const SuperAdmin = () => {
     e.preventDefault();
     const token = localStorage.getItem('token');
     try {
-      await axios.post('http://localhost:5001/api/super/create-user', newUser, { headers: { Authorization: `Bearer ${token}` } });
+      await axios.post(`${import.meta.env.VITE_API_URL}/api/super/create-user`, newUser, { headers: { Authorization: `Bearer ${token}` } });
       setShowCreateModal(false);
       setNewUser({ username: '', email: '', password: '', role: 'student' });
       fetchSuperDashboardData();
@@ -113,7 +113,7 @@ const SuperAdmin = () => {
     const token = localStorage.getItem('token');
     if (window.confirm(`Change user role to ${newRole.toUpperCase()}?`)) {
       try {
-        await axios.patch(`http://localhost:5001/api/super/role/${userId}`, { role: newRole }, { headers: { Authorization: `Bearer ${token}` } });
+        await axios.patch(`${import.meta.env.VITE_API_URL}/api/super/role/${userId}`, { role: newRole }, { headers: { Authorization: `Bearer ${token}` } });
         fetchSuperDashboardData();
       } catch (err) { alert("Role update failed"); }
     }
@@ -123,7 +123,7 @@ const SuperAdmin = () => {
     const token = localStorage.getItem('token');
     if (window.confirm("CRITICAL: Delete this user permanently?")) {
       try {
-        await axios.delete(`http://localhost:5001/api/super/user/${userId}`, { headers: { Authorization: `Bearer ${token}` } });
+        await axios.delete(`${import.meta.env.VITE_API_URL}/api/super/user/${userId}`, { headers: { Authorization: `Bearer ${token}` } });
         fetchSuperDashboardData();
       } catch (err) { alert("Delete failed"); }
     }
@@ -135,7 +135,7 @@ const SuperAdmin = () => {
     if (!window.confirm(confirmMsg)) return;
 
     try {
-      await axios.post('http://localhost:5001/api/admin/handle-report', 
+      await axios.post(`${import.meta.env.VITE_API_URL}/api/admin/handle-report`, 
         { material_id: id, action }, 
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -226,7 +226,7 @@ const SuperAdmin = () => {
                     <div style={{ fontSize: '0.8rem', color: theme.secondary }}>Uploaded by: {m.uploader_name || m.author}</div>
                   </div>
                   <div style={{ display: 'flex', gap: '10px' }}>
-                    <button onClick={() => window.open(`http://localhost:5001/${m.file_url}`)} style={btnStyle(theme.primary)}>View</button>
+                    <button onClick={() => window.open(`${import.meta.env.VITE_API_URL}/${m.file_url}`)} style={btnStyle(theme.primary)}>View</button>
                     <button onClick={() => handleModeration(m.id, 'dismiss')} style={btnStyle(theme.success)}>Dismiss</button>
                     <button onClick={() => handleModeration(m.id, 'reject')} style={{ ...btnStyle(theme.danger), background: theme.danger, color: 'white' }}>Remove</button>
                   </div>

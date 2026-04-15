@@ -13,10 +13,10 @@ const Dashboard = () => {
       try {
         const headers = { Authorization: `Bearer ${token}` };
         
-        const bookmarkRes = await axios.get('http://localhost:5001/api/materials/bookmarks', { headers });
+        const bookmarkRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/materials/bookmarks`, { headers });
         setBookmarkedMaterials(bookmarkRes.data);
 
-        const uploadRes = await axios.get('http://localhost:5001/api/materials/my-uploads', { headers });
+        const uploadRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/materials/my-uploads`, { headers });
         const uploads = uploadRes.data;
 
         const totalDownloads = uploads.reduce((acc, curr) => acc + (curr.download_count || 0), 0);

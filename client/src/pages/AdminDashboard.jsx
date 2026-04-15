@@ -29,7 +29,7 @@ const AdminDashboard = () => {
   const token = localStorage.getItem('token');
   const adminData = JSON.parse(localStorage.getItem('studyshare_user'));
   const headers = { Authorization: `Bearer ${token}` };
-  const API_BASE = 'http://localhost:5001/api/admin';
+  const API_BASE = `${import.meta.env.VITE_API_URL}/api/admin`;
 
   useEffect(() => {
     const handleResize = () => setWidth(window.innerWidth);
@@ -44,7 +44,7 @@ const AdminDashboard = () => {
         axios.get(`${API_BASE}/stats`, { headers }),
         axios.get(`${API_BASE}/pending`, { headers }),
         axios.get(`${API_BASE}/users`, { headers }),
-        axios.get('http://localhost:5001/api/materials/explore', { headers }), 
+        axios.get(`${API_BASE}/materials/explore`, { headers }),
         axios.get(`${API_BASE}/logs`, { headers }),
         axios.get(`${API_BASE}/reported-materials`, { headers })
       ]);
@@ -192,7 +192,7 @@ const AdminDashboard = () => {
                         <td style={{ padding: '12px' }}><strong>{m.title}</strong><br/><small>{m.category}</small></td>
                         <td>{m.author}</td>
                         <td style={{ textAlign: 'right' }}>
-                          <button onClick={() => window.open(`http://localhost:5001/${m.file_url}`)} style={{ marginRight: '10px', color: palette.accent, background: 'none', border: 'none', cursor: 'pointer' }}>View</button>
+                          <button onClick={() => window.open(`${import.meta.env.VITE_API_URL}/${m.file_url}`)} style={{ marginRight: '10px', color: palette.accent, background: 'none', border: 'none', cursor: 'pointer' }}>View</button>
                           <button onClick={() => handleApprove(m.id)} style={{ color: palette.success, fontWeight: 'bold', background: 'none', border: 'none', cursor: 'pointer' }}>Approve</button>
                         </td>
                       </tr>
@@ -205,7 +205,7 @@ const AdminDashboard = () => {
                         </td>
                         <td>{m.author || m.uploader_name}</td>
                         <td style={{ textAlign: 'right' }}>
-                          <button onClick={() => window.open(`http://localhost:5001/${m.file_url}`)} style={{ marginRight: '10px', color: palette.accent, background: 'none', border: 'none', cursor: 'pointer' }}>Check</button>
+                          <button onClick={() => window.open(`${import.meta.env.VITE_API_URL}/${m.file_url}`)} style={{ marginRight: '10px', color: palette.accent, background: 'none', border: 'none', cursor: 'pointer' }}>Check</button>
                           <button onClick={() => handleManageReport(m.id, 'dismiss')} style={{ marginRight: '10px', color: palette.success, background: 'none', border: 'none', cursor: 'pointer' }}>Dismiss</button>
                           <button onClick={() => handleManageReport(m.id, 'reject')} style={{ color: palette.danger, fontWeight: 'bold', background: 'none', border: 'none', cursor: 'pointer' }}>Remove</button>
                         </td>
@@ -216,7 +216,7 @@ const AdminDashboard = () => {
                         <td style={{ padding: '12px' }}><strong>{m.title}</strong><br/><small>{m.category}</small></td>
                         <td>{m.author}</td>
                         <td style={{ textAlign: 'right' }}>
-                          <button onClick={() => window.open(`http://localhost:5001/${m.file_url}`)} style={{ marginRight: '10px', color: palette.accent, background: 'none', border: 'none', cursor: 'pointer' }}>View</button>
+                          <button onClick={() => window.open(`${import.meta.env.VITE_API_URL}/${m.file_url}`)} style={{ marginRight: '10px', color: palette.accent, background: 'none', border: 'none', cursor: 'pointer' }}>View</button>
                           <button onClick={() => handleRemove(m.id)} style={{ color: palette.danger, fontWeight: 'bold', background: 'none', border: 'none', cursor: 'pointer' }}>Remove</button>
                         </td>
                       </tr>
@@ -240,14 +240,14 @@ const AdminDashboard = () => {
               ) : (
                 <div>
                   {activeTab === 'tab-pending' && currentMaterials.map(m => (
-                    <MobileCard key={m.id} title={m.title} subtitle={m.author} info={m.category} actionLabel="Approve" onAction={() => handleApprove(m.id)} actionColor={palette.success} onView={() => window.open(`http://localhost:5001/${m.file_url}`)}/>
+                    <MobileCard key={m.id} title={m.title} subtitle={m.author} info={m.category} actionLabel="Approve" onAction={() => handleApprove(m.id)} actionColor={palette.success} onView={() => window.open(`${import.meta.env.VITE_API_URL}/${m.file_url}`)}/>
                   ))}
                   {activeTab === 'tab-flagged' && reportedMaterials.map(m => (
                     <MobileCard key={m.id} title={`🚩 ${m.title}`} subtitle={`Uploader: ${m.author || m.uploader_name || 'System'}`} info={`${m.report_count} Reports`} actionLabel="Remove" onAction={() => handleManageReport(m.id, 'reject')} actionColor={palette.danger} secondaryActionLabel="Dismiss" onSecondaryAction={() => handleManageReport(m.id, 'dismiss')}
-                        secondaryColor={palette.success} onView={() => window.open(`http://localhost:5001/${m.file_url}`)}/>
+                        secondaryColor={palette.success} onView={() => window.open(`${import.meta.env.VITE_API_URL}/${m.file_url}`)}/>
                   ))}
                   {activeTab === 'tab-content' && approvedMaterials.map(m => (
-                    <MobileCard key={m.id} title={m.title} subtitle={m.author} info={`${m.download_count} Downloads`} actionLabel="Remove" onAction={() => handleRemove(m.id)} actionColor={palette.danger} onView={() => window.open(`http://localhost:5001/${m.file_url}`)}/>
+                    <MobileCard key={m.id} title={m.title} subtitle={m.author} info={`${m.download_count} Downloads`} actionLabel="Remove" onAction={() => handleRemove(m.id)} actionColor={palette.danger} onView={() => window.open(`${import.meta.env.VITE_API_URL}/${m.file_url}`)}/>
                   ))}
                   {activeTab === 'tab-users' && users.filter(u => u.role === 'student').map(u => (
                     <MobileCard key={u.id} title={u.username} subtitle={u.email} info={`Role: ${u.role.toUpperCase()}`} actionLabel="Managed by Super" onAction={() => {}} actionColor={palette.border} hideAction={true}/>
