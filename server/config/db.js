@@ -7,13 +7,15 @@ const pool = mysql.createPool({
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
-    port: process.env.DB_PORT || 25060,
+    port: (process.env.DB_HOST === 'localhost' || process.env.DB_HOST === '127.0.0.1') 
+          ?  3306
+          : (process.env.DB_PORT || 25060),
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0,
-    ssl: {
-        rejectUnauthorized: false
-    }
+    ssl: (process.env.DB_HOST !== 'localhost' && process.env.DB_HOST !== '127.0.0.1') 
+         ? { rejectUnauthorized: false } 
+         : null
 });
 
 // Use promise-based wrapper for async/await support
