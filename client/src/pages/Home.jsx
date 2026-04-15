@@ -41,14 +41,24 @@ const Home = () => {
   }, []);
 
   // DOWNLOAD/VIEW HANDLER
-  const handleView = async (id, fileUrl) => {
-    try {
-      await axios.patch(`http://localhost:5001/api/materials/download/${id}`);
-      window.open(`http://localhost:5001/${fileUrl}`, '_blank');
-    } catch (err) {
-      console.error("View failed:", err);
-    }
-  };
+ const handleView = async (id, fileUrl) => {
+  // Check if user exists in localStorage
+  const user = JSON.parse(localStorage.getItem('user')); // Adjust key name if needed
+
+  if (!user) {
+    alert("Please Log In to view or download materials!");
+    window.location.href = '/login'; // Or use useNavigate()
+    return;
+  }
+
+  try {
+    // This will now only work if the user has a valid JWT token
+    await axios.patch(`http://localhost:5001/api/materials/download/${id}`);
+    window.open(`http://localhost:5001/${fileUrl}`, '_blank');
+  } catch (err) {
+    console.error("View failed:", err);
+  }
+};
 
   return (
     <main style={{ backgroundColor: palette.bg, minHeight: '100vh' }}>

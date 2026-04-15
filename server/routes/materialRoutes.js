@@ -5,10 +5,10 @@ const reviewController = require('../controllers/reviewController');
 const { verifyToken } = require('../middleware/authMiddleware');
 
 // Public Explore: Students search for approved notes
-router.get('/explore', verifyToken, materialController.getApprovedMaterials);
+router.get('/explore',  materialController.getApprovedMaterials);
 
 // Increment Stat: Call this via axios when the download button is clicked 
-router.patch('/download/:id', materialController.trackDownload);
+router.patch('/download/:id', verifyToken, materialController.trackDownload);
 // User sees their own history 
 router.get('/my-uploads', verifyToken, materialController.getMyMaterials);
 
