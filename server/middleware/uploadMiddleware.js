@@ -4,7 +4,7 @@ const path = require('path');
 // 1. Define where and how to store the files
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, 'uploads/'); 
+        cb(null, path.join(__dirname, '../uploads'));
     },
     filename: (req, file, cb) => {
         // Renames file to: 1712258...-notes.pdf (Prevents overwriting same-named files)

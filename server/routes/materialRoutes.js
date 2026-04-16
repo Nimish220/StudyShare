@@ -3,7 +3,7 @@ const router = express.Router();
 const materialController = require('../controllers/materialController');
 const reviewController = require('../controllers/reviewController');
 const { verifyToken } = require('../middleware/authMiddleware');
-
+const upload = require('../middleware/uploadMiddleware');
 // Public Explore: Students search for approved notes
 router.get('/explore',  materialController.getApprovedMaterials);
 
@@ -21,4 +21,5 @@ router.post('/rate', verifyToken, reviewController.addReview);
 router.post('/bookmark', verifyToken, materialController.toggleBookmark); 
 router.get('/bookmarks', verifyToken, materialController.getUserBookmarks);
 router.post('/report', verifyToken, materialController.reportMaterial);
+router.post('/upload', verifyToken, upload.single('materialFile'), materialController.uploadMaterial);
 module.exports = router;
