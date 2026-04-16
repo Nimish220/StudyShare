@@ -44,7 +44,7 @@ const AdminDashboard = () => {
         axios.get(`${API_BASE}/stats`, { headers }),
         axios.get(`${API_BASE}/pending`, { headers }),
         axios.get(`${API_BASE}/users`, { headers }),
-        axios.get(`${API_BASE}/materials/explore`, { headers }),
+        axios.get(`${import.meta.env.VITE_API_URL}/api/materials/explore`, { headers }),
         axios.get(`${API_BASE}/logs`, { headers }),
         axios.get(`${API_BASE}/reported-materials`, { headers })
       ]);
