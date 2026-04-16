@@ -17,7 +17,8 @@ build/
 out/
 
 # 4. Uploads & Temporary Files
-server/uploads/
+server/uploads/*
+!server/uploads/.gitkeep
 # Prevent accidental PDF/Image pushes from local testing
 *.pdf
 *.jpg
