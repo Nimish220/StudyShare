@@ -61,7 +61,7 @@ const SuperAdmin = () => {
     setLoading(true);
     const headers = { Authorization: `Bearer ${token}` };
     try {
-      const [statsRes, usersRes] = await Promise.all([
+      const [statsRes, usersRes,reportedRes] = await Promise.all([
         axios.get(`${import.meta.env.VITE_API_URL}/api/super/stats`, { headers }),
         axios.get(`${import.meta.env.VITE_API_URL}/api/super/users`, { headers }),
         axios.get(`${import.meta.env.VITE_API_URL}/api/admin/reported-materials`, { headers })
