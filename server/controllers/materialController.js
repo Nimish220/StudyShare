@@ -4,7 +4,7 @@ const db = require('../config/db');
 exports.getApprovedMaterials = async (req, res) => {
     try {
         const { search, category } = req.query;
-        const userId = req.user ? req.user.id : null; // Get ID if user is logged in
+        const userId = req.user ? req.user.id : 0; // Get ID if user is logged in
         
         // Updated Query: Calculates AVG rating and checks if current user bookmarked it
         let query = `
@@ -13,7 +13,8 @@ exports.getApprovedMaterials = async (req, res) => {
                 u.username AS author,
                 IFNULL(AVG(r.rating), 0) AS avg_rating,
                 COUNT(DISTINCT r.id) AS review_count,
-                CASE WHEN b.material_id IS NOT NULL THEN 1 ELSE 0 END AS isBookmarked
+                IF(COUNT(DISTINCT b.id) > 0, 1, 0) AS isBookmarked,
+                (SELECT COUNT(*) FROM reviews WHERE material_id = m.id AND user_id = ?) as userHasRated
             FROM materials m 
             JOIN users u ON m.uploader_id = u.id 
             LEFT JOIN reviews r ON m.id = r.material_id
@@ -21,7 +22,7 @@ exports.getApprovedMaterials = async (req, res) => {
             WHERE m.status = 'approved'
         `;
         
-        let params = [userId];
+        let params = [userId, userId];
 
         // Filter logic remains stable to prevent UI jumping
         if (category && category !== 'All') {
@@ -40,6 +41,7 @@ exports.getApprovedMaterials = async (req, res) => {
         const [materials] = await db.query(query, params);
         res.json(materials);
     } catch (err) {
+        console.error("SQL Error:", err.message);
         res.status(500).json({ error: err.message });
     }
 };
