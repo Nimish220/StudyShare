@@ -167,7 +167,7 @@ const Browse = () => {
               >
                 All Materials
               </button>
-              {user?.role === 'user' && (
+              {user?.role === 'student' && (
                 <button 
                   onClick={() => setViewMode('my-uploads')}
                   style={{ padding: '8px 13px', borderRadius: '25px', border: 'none', cursor: 'pointer', fontWeight: '600', transition: '0.2s', backgroundColor: viewMode === 'my-uploads' ? '#6d4c41' : 'transparent', color: viewMode === 'my-uploads' ? 'white' : '#6d4c41', fontSize: '14px' }}

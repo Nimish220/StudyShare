@@ -6,7 +6,7 @@ const Login = () => {
   const location = useLocation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [selectedRole, setSelectedRole] = useState('user');
+  const [selectedRole, setSelectedRole] = useState('student');
   const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = async (e) => {
@@ -39,7 +39,7 @@ const Login = () => {
               navigate(dbRole === 'superadmin' ? '/superadmin' : '/admin');
       }
       // 3. If it's a regular student going to /upload, let them go
-      else if (destination === '/upload' && dbRole === 'user') {
+      else if (destination === '/upload' && dbRole === 'student') {
               navigate('/upload');
       }
       else {
@@ -78,11 +78,11 @@ const Login = () => {
         <div className="role-toggle">
           <button 
             type="button"
-            className={selectedRole === 'user' ? 'active' : ''} 
-            onClick={() => setSelectedRole('user')}
+            className={selectedRole === 'student' ? 'active' : ''} 
+            onClick={() => setSelectedRole('student')}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            <span className="role-label">User</span>
+            <span className="role-label">Student</span>
           </button>
           <button 
             type="button"
