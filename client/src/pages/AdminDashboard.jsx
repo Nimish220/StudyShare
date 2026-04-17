@@ -112,6 +112,31 @@ const AdminDashboard = () => {
   );
 
   const isMobile = width < 768;
+  const getFileType = (url) => {
+  if (!url) return 'Unknown';
+
+  // 1. Standard check: split by dot and get the last part
+  const parts = url.split('.');
+  const ext = parts.length > 1 ? parts.pop().toLowerCase() : '';
+
+  // 2. If standard check works (short extension)
+  if (ext && ext.length <= 4) {
+    if (['jpg', 'jpeg', 'png', 'webp'].includes(ext)) return 'IMAGE';
+    if (ext === 'pdf') return 'PDF';
+    if (['doc', 'docx'].includes(ext)) return 'WORD';
+    if (['ppt', 'pptx'].includes(ext)) return 'PPT';
+    return ext.toUpperCase();
+  }
+
+  // 3. Fallback: Search the entire URL for keywords (Case-insensitive)
+  const lowerUrl = url.toLowerCase();
+  if (lowerUrl.includes('pdf')) return 'PDF';
+  if (lowerUrl.includes('ppt') || lowerUrl.includes('powerpoint')) return 'PPT';
+  if (lowerUrl.includes('doc') || lowerUrl.includes('word')) return 'WORD';
+  if (lowerUrl.includes('png') || lowerUrl.includes('jpg') || lowerUrl.includes('jpeg')) return 'IMAGE';
+
+  return 'FILE'; // Final fallback
+};
 
   return (
     <div style={{ backgroundColor: palette.bg, minHeight: '100vh', padding: '20px 0' }}>
@@ -189,10 +214,26 @@ const AdminDashboard = () => {
                   <tbody>
                     {activeTab === 'tab-pending' && currentMaterials.map(m => (
                       <tr key={m.id} style={{ borderBottom: `1px solid ${palette.bg}` }}>
-                        <td style={{ padding: '12px' }}><strong>{m.title}</strong><br/><small>{m.category}</small></td>
+                        <td style={{ padding: '12px' }}>
+                            <strong>{m.title}</strong><br/>
+                            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginTop: '4px' }}>
+                              <small style={{ color: palette.textSub }}>{m.category}</small>
+                              <span style={{ 
+                                fontSize: '9px', 
+                                padding: '2px 6px', 
+                                borderRadius: '4px', 
+                                backgroundColor: getFileType(m.file_url) === 'PDF' ? '#E74C3C' : '#3498DB', 
+                                color: 'white', 
+                                fontWeight: 'bold',
+                                textTransform: 'uppercase'
+                              }}>
+                                {getFileType(m.file_url)}
+                              </span>
+                            </div>
+                          </td>
                         <td>{m.author}</td>
                         <td style={{ textAlign: 'right' }}>
-                          <button onClick={() => window.open(`${import.meta.env.VITE_API_URL}/${m.file_url}`)} style={{ marginRight: '10px', color: palette.accent, background: 'none', border: 'none', cursor: 'pointer' }}>View</button>
+                          <button onClick={() => window.open(m.file_url, '_blank', 'noopener,noreferrer')} style={{ marginRight: '10px', color: palette.accent, background: 'none', border: 'none', cursor: 'pointer' }}>View</button>
                           <button onClick={() => handleApprove(m.id)} style={{ color: palette.success, fontWeight: 'bold', background: 'none', border: 'none', cursor: 'pointer' }}>Approve</button>
                         </td>
                       </tr>
@@ -200,12 +241,24 @@ const AdminDashboard = () => {
                     {activeTab === 'tab-flagged' && reportedMaterials.map(m => (
                       <tr key={m.id} style={{ borderBottom: `1px solid ${palette.bg}` }}>
                         <td style={{ padding: '12px' }}>
-                            <strong style={{color: palette.danger}}>{m.title}</strong><br/>
+                          <strong style={{color: palette.danger}}>{m.title}</strong><br/>
+                          <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginTop: '4px' }}>
                             <small>🚩 {m.report_count} Reports | {m.category}</small>
+                            <span style={{ 
+                              fontSize: '9px', 
+                              padding: '2px 6px', 
+                              borderRadius: '4px', 
+                              backgroundColor: getFileType(m.file_url) === 'PDF' ? '#E74C3C' : '#3498DB', 
+                              color: 'white', 
+                              fontWeight: 'bold' 
+                            }}>
+                              {getFileType(m.file_url)}
+                            </span>
+                          </div>
                         </td>
                         <td>{m.author || m.uploader_name}</td>
                         <td style={{ textAlign: 'right' }}>
-                          <button onClick={() => window.open(`${import.meta.env.VITE_API_URL}/${m.file_url}`)} style={{ marginRight: '10px', color: palette.accent, background: 'none', border: 'none', cursor: 'pointer' }}>Check</button>
+                          <button onClick={() => window.open(m.file_url, '_blank', 'noopener,noreferrer')} style={{ marginRight: '10px', color: palette.accent, background: 'none', border: 'none', cursor: 'pointer' }}>Check</button>
                           <button onClick={() => handleManageReport(m.id, 'dismiss')} style={{ marginRight: '10px', color: palette.success, background: 'none', border: 'none', cursor: 'pointer' }}>Dismiss</button>
                           <button onClick={() => handleManageReport(m.id, 'reject')} style={{ color: palette.danger, fontWeight: 'bold', background: 'none', border: 'none', cursor: 'pointer' }}>Remove</button>
                         </td>
@@ -213,12 +266,28 @@ const AdminDashboard = () => {
                     ))}
                     {activeTab === 'tab-content' && approvedMaterials.map(m => (
                       <tr key={m.id} style={{ borderBottom: `1px solid ${palette.bg}` }}>
-                        <td style={{ padding: '12px' }}><strong>{m.title}</strong><br/><small>{m.category}</small></td>
-                        <td>{m.author}</td>
+                        <td style={{ padding: '12px' }}>
+                          <strong>{m.title}</strong><br/>
+                          <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginTop: '4px' }}>
+                            <small style={{ color: palette.textSub }}>{m.category}</small>
+                            <span style={{ 
+                              fontSize: '9px', 
+                              padding: '2px 6px', 
+                              borderRadius: '4px', 
+                              backgroundColor: getFileType(m.file_url) === 'PDF' ? '#E74C3C' : '#3498DB', 
+                              color: 'white', 
+                              fontWeight: 'bold' 
+                            }}>
+                              {getFileType(m.file_url)}
+                            </span>
+                          </div>
+                        </td>
+                        <td>{m.author || m.uploader_name}</td>
                         <td style={{ textAlign: 'right' }}>
-                          <button onClick={() => window.open(`${import.meta.env.VITE_API_URL}/${m.file_url}`)} style={{ marginRight: '10px', color: palette.accent, background: 'none', border: 'none', cursor: 'pointer' }}>View</button>
+                          <button onClick={() => window.open(m.file_url, '_blank', 'noopener,noreferrer')} style={{ marginRight: '10px', color: palette.accent, background: 'none', border: 'none', cursor: 'pointer' }}>View</button>
                           <button onClick={() => handleRemove(m.id)} style={{ color: palette.danger, fontWeight: 'bold', background: 'none', border: 'none', cursor: 'pointer' }}>Remove</button>
                         </td>
+
                       </tr>
                     ))}
                     {activeTab === 'tab-users' && users.filter(u => u.role === 'student').map(u => (
@@ -240,14 +309,15 @@ const AdminDashboard = () => {
               ) : (
                 <div>
                   {activeTab === 'tab-pending' && currentMaterials.map(m => (
-                    <MobileCard key={m.id} title={m.title} subtitle={m.author} info={m.category} actionLabel="Approve" onAction={() => handleApprove(m.id)} actionColor={palette.success} onView={() => window.open(`${import.meta.env.VITE_API_URL}/${m.file_url}`)}/>
+                    <MobileCard key={m.id} title={m.title} subtitle={m.author} info={`Type: ${getFileType(m.file_url)}`} // Adds the type here
+    actionLabel="Approve" onAction={() => handleApprove(m.id)} actionColor={palette.success} onView={() => window.open(m.file_url, '_blank', 'noopener,noreferrer')}/>
                   ))}
                   {activeTab === 'tab-flagged' && reportedMaterials.map(m => (
                     <MobileCard key={m.id} title={`🚩 ${m.title}`} subtitle={`Uploader: ${m.author || m.uploader_name || 'System'}`} info={`${m.report_count} Reports`} actionLabel="Remove" onAction={() => handleManageReport(m.id, 'reject')} actionColor={palette.danger} secondaryActionLabel="Dismiss" onSecondaryAction={() => handleManageReport(m.id, 'dismiss')}
-                        secondaryColor={palette.success} onView={() => window.open(`${import.meta.env.VITE_API_URL}/${m.file_url}`)}/>
+                        secondaryColor={palette.success} onView={() => window.open(m.file_url, '_blank', 'noopener,noreferrer')}/>
                   ))}
                   {activeTab === 'tab-content' && approvedMaterials.map(m => (
-                    <MobileCard key={m.id} title={m.title} subtitle={m.author} info={`${m.download_count} Downloads`} actionLabel="Remove" onAction={() => handleRemove(m.id)} actionColor={palette.danger} onView={() => window.open(`${import.meta.env.VITE_API_URL}/${m.file_url}`)}/>
+                    <MobileCard key={m.id} title={m.title} subtitle={m.author} info={`${m.download_count} Downloads`} actionLabel="Remove" onAction={() => handleRemove(m.id)} actionColor={palette.danger} onView={() => window.open(m.file_url, '_blank', 'noopener,noreferrer')}/>
                   ))}
                   {activeTab === 'tab-users' && users.filter(u => u.role === 'student').map(u => (
                     <MobileCard key={u.id} title={u.username} subtitle={u.email} info={`Role: ${u.role.toUpperCase()}`} actionLabel="Managed by Super" onAction={() => {}} actionColor={palette.border} hideAction={true}/>

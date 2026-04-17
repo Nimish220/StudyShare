@@ -1,26 +1,41 @@
+const cloudinary = require('cloudinary').v2;
+// V4 requires destructuring the CloudinaryStorage class
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const multer = require('multer');
 const path = require('path');
 
-// 1. Define where and how to store the files
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, path.join(__dirname, '../uploads'));
-    },
-    filename: (req, file, cb) => {
-        // Renames file to: 1712258...-notes.pdf (Prevents overwriting same-named files)
-        cb(null, Date.now() + '-' + file.originalname);
-    }
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-// 2. Filter file types (Requirement: PDF, DOCX, Images)
+// 1. Define Storage Engine for V4
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: async (req, file) => {
+    const ext = path.extname(file.originalname); 
+    const publicId = Date.now() + '-' + file.originalname.split('.')[0];
+    return {
+      folder: 'studyshare_materials',
+      resource_type: 'auto', // Correctly handles PDF, DOCX, and Images
+      public_id: publicId, 
+      format: ext.replace('.', '')
+    };
+  },
+});
+
+// 2. Filter file types (Remains mostly the same, but good to keep)
 const fileFilter = (req, file, cb) => {
     const fileTypes = /jpeg|jpg|png|pdf|docx|doc|pptx/;
     const extName = fileTypes.test(path.extname(file.originalname).toLowerCase());
     const mimeType = fileTypes.test(file.mimetype);
+    
     if (extName || mimeType) {
-        return cb(null, true);
+        cb(null, true);
     } else {
-        cb(new Error("Error: Only Images, PDFs,Word and PPTX are allowed!"));
+        cb(new Error("Error: Only Images, PDFs, Word and PPTX are allowed!"));
     }
 };
 

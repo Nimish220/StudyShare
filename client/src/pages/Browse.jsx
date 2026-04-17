@@ -97,19 +97,28 @@ useEffect(() => {
 };
 
   const handleDownload = async (id, fileUrl) => {
-    try {
-      await axios.patch(`${import.meta.env.VITE_API_URL}/api/materials/download/${id}`);
-      window.open(`${import.meta.env.VITE_API_URL}/${fileUrl}`, '_blank');
-      setMaterials(prev => prev.map(m => m.id === id ? { ...m, download_count: (m.download_count || 0) + 1 } : m));
-    } catch (err) {
+  try {
+    // 1. Update the download/view count in your MySQL DB via your backend API
+    await axios.patch(`${import.meta.env.VITE_API_URL}/api/materials/download/${id}`);
+
+    // 2. Open the file in a new tab
+    // We REMOVED `${import.meta.env.VITE_API_URL}/` because fileUrl is now a full Cloudinary HTTPS link
+    window.open(fileUrl, '_blank', 'noopener,noreferrer');
+
+    // 3. Increment the count in the React state so the UI updates immediately
+    setMaterials(prev => 
+      prev.map(m => m.id === id ? { ...m, download_count: (m.download_count || 0) + 1 } : m)
+    );
+  } catch (err) {
     if (err.response?.status === 401) {
-        alert("Your session expired! Redirecting to login...");
-        window.location.href = '/login';
-      } else {
-        alert(err.response?.data?.message || "An error occurred");
-      }
+      alert("Your session expired! Redirecting to login...");
+      window.location.href = '/login';
+    } else {
+      // Fallback: If the database update fails, still try to open the file for the user
+      window.open(fileUrl, '_blank', 'noopener,noreferrer');
     }
-  };
+  }
+};
 
   const handleRateSubmit = async () => {
     try {

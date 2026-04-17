@@ -23,6 +23,7 @@ const { verifyToken } = require('./middleware/authMiddleware');
 const upload = require('./middleware/uploadMiddleware');
 const materialRoutes = require('./routes/materialRoutes');
 const superAdminRoutes = require('./routes/superAdminRoutes');
+const multer = require('multer');
 app.use('/api/materials', materialRoutes);
 // Workflow: Login -> Verify Token -> Save File -> Save Metadata
 app.post(
