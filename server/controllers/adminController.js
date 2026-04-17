@@ -42,9 +42,6 @@ exports.getAllUsers = async (req, res) => {
     }
 };
 
-// Inside adminController.js
-const { logAction } = require('./superAdminController');
-
 exports.approveMaterial = async (req, res) => {
     try {
         const { id } = req.params;

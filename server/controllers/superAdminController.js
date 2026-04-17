@@ -8,7 +8,7 @@ const logAction = async (text, adminId = null) => {
         console.error("Logging failed:", err.message);
     }
 };
-exports.getSuperStats = async (req, res) => {
+const getSuperStats = async (req, res) => {
     try {
         const [userCount] = await db.query("SELECT COUNT(*) as total FROM users");
         const [adminCount] = await db.query("SELECT COUNT(*) as total FROM users WHERE role = 'admin'");
@@ -41,7 +41,7 @@ exports.getSuperStats = async (req, res) => {
     }
 };
 
-exports.getAllUsersDetailed = async (req, res) => {
+const getAllUsersDetailed = async (req, res) => {
     try {
         const [users] = await db.query("SELECT id, username, email, role, created_at FROM users ORDER BY created_at DESC");
         res.json(users);
@@ -50,7 +50,7 @@ exports.getAllUsersDetailed = async (req, res) => {
     }
 };
 
-exports.updateUserRole = async (req, res) => {
+const updateUserRole = async (req, res) => {
     const { id } = req.params;
     const { role } = req.body; 
     const adminId = req.user.id; // From verifyToken middleware
@@ -81,7 +81,7 @@ exports.updateUserRole = async (req, res) => {
     }
 };
 
-exports.runMaintenance = async (req, res) => {
+const runMaintenance = async (req, res) => {
     try {
         await logAction(`System Maintenance performed`, req.user.id);
         res.json({ message: "Maintenance successful" });
@@ -91,7 +91,7 @@ exports.runMaintenance = async (req, res) => {
 };
 
 // --- NEW: Create User ---
-exports.createUser = async (req, res) => {
+const createUser = async (req, res) => {
     const { username, email, password, role } = req.body;
     try {
         // 1. Check if user exists
@@ -117,7 +117,7 @@ exports.createUser = async (req, res) => {
 };
 
 // --- NEW: Delete User (WITH LAST-ADMIN SAFETY) ---
-exports.deleteUser = async (req, res) => {
+const deleteUser = async (req, res) => {
     const { id } = req.params;
     const adminId = req.user.id; // The person performing the deletion
 
@@ -153,12 +153,11 @@ exports.deleteUser = async (req, res) => {
     }
 };
 module.exports = { 
-    ...exports, 
-    getSuperStats: exports.getSuperStats,
-    getAllUsersDetailed: exports.getAllUsersDetailed,
-    updateUserRole: exports.updateUserRole,
-    runMaintenance: exports.runMaintenance,
-    createUser: exports.createUser,
-    deleteUser: exports.deleteUser,
+    getSuperStats,
+    getAllUsersDetailed,
+    updateUserRole,
+    runMaintenance,
+    createUser,
+    deleteUser,
     logAction 
 };
