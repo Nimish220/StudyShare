@@ -2,8 +2,8 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 
 const Footer = () => {
-  // Get user from localStorage exactly like the Navbar does
-  const user = JSON.parse(localStorage.getItem('studyshare_user'));
+  // Get user from sessionStorage exactly like the Navbar does
+  const user = JSON.parse(sessionStorage.getItem('studyshare_user'));
 
   // Logic to determine the path and label based on role
   const getDashboardInfo = () => {

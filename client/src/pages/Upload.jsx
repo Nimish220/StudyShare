@@ -44,7 +44,7 @@ const Upload = () => {
     data.append('tags', formData.tags);
 
     try {
-      const token = localStorage.getItem('token'); 
+      const token = sessionStorage.getItem('token'); 
       await axios.post(`${import.meta.env.VITE_API_URL}/api/materials/upload`, data, {
         headers: { 'Content-Type': 'multipart/form-data', 'Authorization': `Bearer ${token}` }
       });

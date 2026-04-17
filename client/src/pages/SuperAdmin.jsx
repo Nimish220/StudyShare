@@ -56,7 +56,7 @@ const SuperAdmin = () => {
   }, [location]);
 
   const fetchSuperDashboardData = useCallback(async () => {
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
     if (!token) return;
     setLoading(true);
     const headers = { Authorization: `Bearer ${token}` };
@@ -89,7 +89,7 @@ const SuperAdmin = () => {
   }, [filteredUsers, currentPage, pageSize]);
 
   useEffect(() => {
-    const savedUser = localStorage.getItem('studyshare_user');
+    const savedUser = sessionStorage.getItem('studyshare_user');
     if (savedUser) setAdminUser(JSON.parse(savedUser));
     fetchSuperDashboardData();
     if (pollTimer.current) clearInterval(pollTimer.current);
@@ -100,7 +100,7 @@ const SuperAdmin = () => {
   // --- ACTIONS ---
   const handleCreateUser = async (e) => {
     e.preventDefault();
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
     try {
       await axios.post(`${import.meta.env.VITE_API_URL}/api/super/create-user`, newUser, { headers: { Authorization: `Bearer ${token}` } });
       setShowCreateModal(false);
@@ -110,7 +110,7 @@ const SuperAdmin = () => {
   };
 
   const handleUpdateRole = async (userId, newRole) => {
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
     if (window.confirm(`Change user role to ${newRole.toUpperCase()}?`)) {
       try {
         await axios.patch(`${import.meta.env.VITE_API_URL}/api/super/role/${userId}`, { role: newRole }, { headers: { Authorization: `Bearer ${token}` } });
@@ -120,7 +120,7 @@ const SuperAdmin = () => {
   };
 
   const handleDeleteUser = async (userId) => {
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
     if (window.confirm("CRITICAL: Delete this user permanently?")) {
       try {
         await axios.delete(`${import.meta.env.VITE_API_URL}/api/super/user/${userId}`, { headers: { Authorization: `Bearer ${token}` } });
@@ -130,7 +130,7 @@ const SuperAdmin = () => {
   };
     // 1. Add this handler function
   const handleModeration = async (id, action) => {
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
     const confirmMsg = action === 'reject' ? "Reject and remove this content?" : "Dismiss all reports?";
     if (!window.confirm(confirmMsg)) return;
 

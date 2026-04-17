@@ -2,11 +2,11 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 
 const Navbar = () => {
-  const userString = localStorage.getItem('studyshare_user');
+  const userString = sessionStorage.getItem('studyshare_user');
   const user = userString ? JSON.parse(userString) : null;
 
   const handleLogout = () => {
-    localStorage.clear();
+    sessionStorage.clear();
     window.location.href = '/login'; 
   };
 

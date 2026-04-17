@@ -5,8 +5,8 @@ import axios from 'axios';
 const Dashboard = () => {
   const [bookmarkedMaterials, setBookmarkedMaterials] = useState([]);
   const [stats, setStats] = useState({ uploads: 0, bookmarks: 0, avgRating: 0, downloads: 0 });
-  const user = JSON.parse(localStorage.getItem('studyshare_user')) || {};
-  const token = localStorage.getItem('token');
+  const user = JSON.parse(sessionStorage.getItem('studyshare_user')) || {};
+  const token = sessionStorage.getItem('token');
 
   useEffect(() => {
     const fetchDashboardData = async () => {

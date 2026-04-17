@@ -19,7 +19,7 @@ const Login = () => {
       });
 
       // 1. SAVE THE REAL TOKEN
-      localStorage.setItem('token', response.data.token);
+      sessionStorage.setItem('token', response.data.token);
 
       // 2. USE THE ROLE FROM DATABASE (not the selectedRole state)
       const dbRole = response.data.user.role; 
@@ -28,7 +28,7 @@ const Login = () => {
         email: email,
         role: dbRole // Always trust the DB role
       };
-      localStorage.setItem('studyshare_user', JSON.stringify(userData));
+      sessionStorage.setItem('studyshare_user', JSON.stringify(userData));
       const destination = location.state?.from?.pathname;
       
       if (destination === '/browse') {

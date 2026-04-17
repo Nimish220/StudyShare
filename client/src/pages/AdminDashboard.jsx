@@ -26,8 +26,8 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(false);
   const [width, setWidth] = useState(window.innerWidth);
 
-  const token = localStorage.getItem('token');
-  const adminData = JSON.parse(localStorage.getItem('studyshare_user'));
+  const token = sessionStorage.getItem('token');
+  const adminData = JSON.parse(sessionStorage.getItem('studyshare_user'));
   const headers = { Authorization: `Bearer ${token}` };
   const API_BASE = `${import.meta.env.VITE_API_URL}/api/admin`;
 

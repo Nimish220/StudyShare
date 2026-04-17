@@ -20,7 +20,7 @@ axios.interceptors.response.use(
   (error) => {
     if (error.response && error.response.status === 401) {
       alert("Your session has expired. Please log in again.");
-      localStorage.clear(); // Wipe everything
+      sessionStorage.clear();
       window.location.href = '/login'; // Force redirect
     }
     return Promise.reject(error);

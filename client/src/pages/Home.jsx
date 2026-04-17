@@ -42,8 +42,9 @@ const Home = () => {
 
   // DOWNLOAD/VIEW HANDLER
  const handleView = async (id, fileUrl) => {
-  // Check if user exists in localStorage
-  const user = JSON.parse(localStorage.getItem('user')); // Adjust key name if needed
+  // Check if user exists in sessionStorage
+  const userString = sessionStorage.getItem('studyshare_user');
+  const user = userString ? JSON.parse(userString) : null;
 
   if (!user) {
     alert("Please Log In to view or download materials!");
