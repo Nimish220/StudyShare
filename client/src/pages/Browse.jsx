@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect,useCallback } from 'react';
 import axios from 'axios';
 import { useLocation } from 'react-router-dom';
 const allCategories = [
@@ -20,60 +20,65 @@ const Browse = () => {
   const [userComment, setUserComment] = useState('');
   const [reviews, setReviews] = useState([]);
   const [showReviewsModal, setShowReviewsModal] = useState(false);
+
+  const user = JSON.parse(sessionStorage.getItem('studyshare_user') || 'null');
+ 
+  const getHeaders = () => {
+  const token = sessionStorage.getItem('token');
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
+  // 1. Define the function with useCallback so it doesn't change on every render
+const fetchMaterials = useCallback(async () => {
+  const currentToken = sessionStorage.getItem('token'); 
+  const fetchHeaders = currentToken ? { Authorization: `Bearer ${currentToken}` } : {};
+  
+  setLoading(true);
+  try {
+    let url = viewMode === 'my-uploads' 
+      ? `${import.meta.env.VITE_API_URL}/api/materials/my-uploads` 
+      : `${import.meta.env.VITE_API_URL}/api/materials/explore`;
+
+    const res = await axios.get(url, {
+      params: { search: searchQuery, category: activeCategory },
+      headers: getHeaders()
+    });
+
+    const formattedData = res.data.map(item => ({
+      ...item,
+      isBookmarked: item.isBookmarked === 1 || item.isBookmarked === true,
+      avg_rating: parseFloat(item.avg_rating) || 0 
+    }));
+
+    setMaterials(formattedData);
+  } catch (err) {
+    setMaterials([]);
+    console.error("Fetch error:", err);
+  } finally {
+    setLoading(false);
+  }
+}, [viewMode, searchQuery, activeCategory]); // Dependencies for the function itself
+
+// 2. Correct useEffect: Pass the function name, NO parentheses ()
+useEffect(() => {
+  fetchMaterials();
+}, [fetchMaterials]);
+
   useEffect(() => {
     if (location.state?.view) {
       setViewMode(location.state.view);
     }
   }, [location.state]);
-  const user = JSON.parse(sessionStorage.getItem('studyshare_user') || 'null');
-  const getHeaders = () => {
-  const token = sessionStorage.getItem('token');
-  return token ? { Authorization: `Bearer ${token}` } : {};
-};
-  const fetchMaterials = async () => {
-    const currentToken = sessionStorage.getItem('token'); 
-    const fetchHeaders = currentToken ? { Authorization: `Bearer ${currentToken}` } : {};
-    setLoading(true);
-    try {
-      let url = viewMode === 'my-uploads' 
-        ? `${import.meta.env.VITE_API_URL}/api/materials/my-uploads` 
-        : `${import.meta.env.VITE_API_URL}/api/materials/explore`;
-
-      const res = await axios.get(url, {
-        params: { search: searchQuery, category: activeCategory },
-        headers:fetchHeaders
-      });
-
-      const formattedData = res.data.map(item => ({
-        ...item,
-        isBookmarked: item.isBookmarked === 1,
-        avg_rating: parseFloat(item.avg_rating) || 0 
-      }));
-
-      setMaterials(formattedData);
-    } catch (err) {
-      setMaterials([]);
-      alert("Failed to load materials. Try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchMaterials();
-  }, [activeCategory, viewMode]);
 
   const handleBookmarkToggle = async (id) => {
-  if (!sessionStorage.getItem('token')) {
-  return alert("Login to bookmark!");
-}
+  const headers = getHeaders();
+ if (!headers.Authorization) return alert("Login to bookmark!");
 
   try {
     // Send the request to the backend
     const res = await axios.post(
       `${import.meta.env.VITE_API_URL}/api/materials/bookmark`, 
       { material_id: id }, 
-      { headers:getHeaders() }
+      { headers }
     );
 
     // Update the UI locally so it feels fast
@@ -96,7 +101,14 @@ const Browse = () => {
       await axios.patch(`${import.meta.env.VITE_API_URL}/api/materials/download/${id}`);
       window.open(`${import.meta.env.VITE_API_URL}/${fileUrl}`, '_blank');
       setMaterials(prev => prev.map(m => m.id === id ? { ...m, download_count: (m.download_count || 0) + 1 } : m));
-    } catch (err) { console.error(err); }
+    } catch (err) {
+    if (err.response?.status === 401) {
+        alert("Your session expired! Redirecting to login...");
+        window.location.href = '/login';
+      } else {
+        alert(err.response?.data?.message || "An error occurred");
+      }
+    }
   };
 
   const handleRateSubmit = async () => {
@@ -106,7 +118,15 @@ const Browse = () => {
       }, { headers: getHeaders()});
       setShowRateModal(false);
       fetchMaterials();
-    } catch (err) { alert(err.response?.data?.message || "Error submitting rating"); }
+    } 
+    catch (err) {
+      if (err.response?.status === 401) {
+        alert("Your session expired! Redirecting to login...");
+        window.location.href = '/login';
+      } else {
+        alert(err.response?.data?.message || "Failed to submit rating.");
+      }
+    }
   };
 
   const handleReport = async (id) => {

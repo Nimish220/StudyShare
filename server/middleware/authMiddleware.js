@@ -26,7 +26,28 @@ const verifyToken = async (req, res, next) => {
     }
 };
 
-// Keep isAdmin and isSuperAdmin as they were, they will now use the FRESH req.user.role
+// 2. FOR PUBLIC BROWSING (Explore/Browse)
+// This will NEVER send an error. It just identifies the user for bookmarks.
+const optionalAuth = async (req, res, next) => {
+    const token = req.headers['authorization']?.split(' ')[1];
+
+    if (!token) {
+        req.user = null;
+        return next();
+    }
+
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const [rows] = await db.query("SELECT id, username, role FROM users WHERE id = ?", [decoded.id]);
+        req.user = rows.length > 0 ? rows[0] : null;
+        next();
+    } catch (err) {
+        req.user = null; // Token expired? No problem, browse as guest.
+        next();
+    }
+};
+
+// Admin checks (Stay the same)
 const isAdmin = (req, res, next) => {
     if (req.user && (req.user.role === 'admin' || req.user.role === 'superadmin')) {
         next();
@@ -34,6 +55,8 @@ const isAdmin = (req, res, next) => {
         return res.status(403).json({ message: "Access Denied: Admins only" });
     }
 };
+
+module.exports = { verifyToken, optionalAuth, isAdmin };
 
 const isSuperAdmin = (req, res, next) => {
     if (req.user && req.user.role === 'superadmin') {
@@ -43,4 +66,4 @@ const isSuperAdmin = (req, res, next) => {
     }
 };
 
-module.exports = { verifyToken, isAdmin, isSuperAdmin };
+module.exports = { verifyToken,optionalAuth, isAdmin, isSuperAdmin };
