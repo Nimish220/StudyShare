@@ -50,6 +50,9 @@ const { logAction } = require('./superAdminController'); // Import the helper
 
 exports.uploadMaterial = async (req, res) => {
     try {
+        if (!req.file) {
+            return res.status(400).json({ error: "No file uploaded or file type not supported." });
+        }
         const { title, description, category } = req.body;
         const uploader_id = req.user.id; 
         const file_url = req.file.path;  

@@ -14,19 +14,19 @@ const storage = multer.diskStorage({
 
 // 2. Filter file types (Requirement: PDF, DOCX, Images)
 const fileFilter = (req, file, cb) => {
-    const fileTypes = /jpeg|jpg|png|pdf|docx/;
+    const fileTypes = /jpeg|jpg|png|pdf|docx|doc|pptx/;
     const extName = fileTypes.test(path.extname(file.originalname).toLowerCase());
-    
-    if (extName) {
+    const mimeType = fileTypes.test(file.mimetype);
+    if (extName || mimeType) {
         return cb(null, true);
     } else {
-        cb(new Error("Error: Only Images, PDFs, and DOCX are allowed!"));
+        cb(new Error("Error: Only Images, PDFs,Word and PPTX are allowed!"));
     }
 };
 
 const upload = multer({
     storage: storage,
-    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+    limits: { fileSize: 50 * 1024 * 1024 }, // 50MB limit
     fileFilter: fileFilter
 });
 

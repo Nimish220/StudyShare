@@ -33,6 +33,14 @@ app.post(
 );
 app.use('/api/super', superAdminRoutes);
 
+app.use((err, req, res, next) => {
+  if (err instanceof multer.MulterError) {
+    return res.status(400).json({ error: `Multer Error: ${err.message}` });
+  } else if (err) {
+    return res.status(500).json({ error: err.message });
+  }
+  next();
+});
 // Test Route
 app.get('/', (req, res) => {
     res.send("StudyShare Server is Running!");
