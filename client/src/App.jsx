@@ -11,6 +11,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import UserDashboard from './pages/UserDashboard';
 import Upload from './pages/Upload';
 import SuperAdmin from './pages/SuperAdmin';
+import Profile from './pages/Profile';
 import ProtectedRoute from './components/ProtectedRoute';
 import './index.css';
 
@@ -35,6 +36,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
+          <Route path="/profile" element={<Profile />} />
           <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
           <Route path="/dashboard" element={<ProtectedRoute><UserDashboard /></ProtectedRoute>} />
           <Route path="/superadmin" element={<ProtectedRoute><SuperAdmin /></ProtectedRoute>} />

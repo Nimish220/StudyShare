@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-
+import { User } from 'lucide-react';
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
@@ -84,15 +84,47 @@ const Navbar = () => {
         </div>
 
         {/* LAPTOP AUTH */}
-        <div className="nav-auth">
+        <div className="nav-auth" style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
           {user ? (
             <>
-              <span className="nav-user-info">
-                {user.username || user.name} 
-                <span className="role-badge" style={{ marginLeft: '8px', fontSize: '0.7rem', padding: '2px 8px', borderRadius: '12px', background: 'var(--secondary)', color: 'var(--primary)', fontWeight: 'bold' }}>
-                  {user.role}
+              {/* Profile Icon + Name Wrapper */}
+              <Link to="/profile" style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '10px', 
+                textDecoration: 'none',
+                color: 'inherit',
+                padding: '5px 10px',
+                borderRadius: '12px',
+                transition: 'background 0.2s'
+              }} className="nav-profile-link">
+                <div style={{
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '50%',
+                  backgroundColor: 'var(--secondary)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'var(--primary)'
+                }}>
+                  <User size={18} />
+                </div>
+                <span className="nav-user-info" style={{ fontWeight: '600' }}>
+                  {user.username}
+                  <span className="role-badge" style={{ 
+                    marginLeft: '8px', 
+                    fontSize: '0.65rem', 
+                    padding: '2px 8px', 
+                    borderRadius: '10px', 
+                    background: '#6d4c41', 
+                    color: 'white' 
+                  }}>
+                    {user.role}
+                  </span>
                 </span>
-              </span>
+              </Link>
+
               <button onClick={handleLogout} className="btn btn-ghost btn-sm">Logout</button>
             </>
           ) : (
@@ -102,7 +134,6 @@ const Navbar = () => {
             </>
           )}
         </div>
-
         {/* MOBILE HAMBURGER BUTTON */}
         <button className="hamburger" onClick={toggleMenu} aria-label="Toggle menu" style={{ zIndex: 110 }}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
