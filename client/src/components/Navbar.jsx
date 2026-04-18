@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { User } from 'lucide-react';
+import { User, Menu, X } from 'lucide-react';
+
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
@@ -8,7 +9,6 @@ const Navbar = () => {
   const userString = sessionStorage.getItem('studyshare_user');
   const user = userString ? JSON.parse(userString) : null;
 
-  // Sync: Close menu on route change and reset scroll
   useEffect(() => {
     setIsMenuOpen(false);
     document.body.style.overflow = 'unset'; 
@@ -17,6 +17,7 @@ const Navbar = () => {
   const toggleMenu = () => {
     const newState = !isMenuOpen;
     setIsMenuOpen(newState);
+    // Lock background scroll when menu is open
     document.body.style.overflow = newState ? 'hidden' : 'unset';
   };
 
@@ -25,185 +26,216 @@ const Navbar = () => {
     window.location.href = '/login'; 
   };
 
-  // Content sync: Increased font weight and size for Mobile specifically
   const renderNavLinks = (isMobile = false) => (
     <>
-      <Link 
-        to="/" 
-        className={location.pathname === '/' ? 'active' : ''}
-        style={isMobile ? { fontSize: '1.5rem', fontWeight: '600' } : {}}
-      >
-        Home
-      </Link>
-      
-      <Link 
-        to="/browse" 
-        className={location.pathname === '/browse' ? 'active' : ''}
-        style={isMobile ? { fontSize: '1.5rem', fontWeight: '600' } : {}}
-      >
-        Browse Library
-      </Link>
-
+      <Link to="/" className={location.pathname === '/' ? 'active-link' : ''}>Home</Link>
+      <Link to="/browse" className={location.pathname === '/browse' ? 'active-link' : ''}>Browse Library</Link>
       {user?.role === 'student' && (
         <>
-          <Link to="/upload" style={isMobile ? { fontSize: '1.5rem', fontWeight: '600' } : {}}>Upload Notes</Link>
-          <Link to="/dashboard" style={isMobile ? { fontSize: '1.5rem', fontWeight: '600' } : {}}>Dashboard</Link>
+          <Link to="/upload" className={location.pathname === '/upload' ? 'active-link' : ''}>Upload Notes</Link>
+          <Link to="/dashboard" className={location.pathname === '/dashboard' ? 'active-link' : ''}>Dashboard</Link>
         </>
       )}
-
-      {user?.role === 'admin' && (
-        <>
-          <Link to="/admin" style={isMobile ? { fontSize: '1.5rem', fontWeight: '600' } : {}}>Admin Panel</Link>
-          <Link to="/admin?tab=content" style={isMobile ? { fontSize: '1.5rem', fontWeight: '600' } : {}}>Manage Content</Link>
-        </>
-      )}
-
-      {user?.role === 'superadmin' && (
-        <>
-          <Link to="/superadmin" style={isMobile ? { fontSize: '1.5rem', fontWeight: '600' } : {}}>SuperAdmin</Link>
-          <Link to="/superadmin?tab=manage-users" style={isMobile ? { fontSize: '1.5rem', fontWeight: '600' } : {}}>Manage Users</Link>
-        </>
+      {(user?.role === 'admin' || user?.role === 'superadmin') && (
+        <Link 
+          to={user.role === 'admin' ? "/admin" : "/superadmin"} 
+          className={location.pathname.includes('admin') || location.pathname.includes('superadmin') ? 'active-link' : ''}
+        >
+          {user.role === 'admin' ? "Admin Panel" : "SuperAdmin"}
+        </Link>
       )}
     </>
   );
 
   return (
-    <nav className="navbar" style={{ borderBottom: '1px solid var(--border)' }}>
-      <div className="container">
-        {/* BRAND LOGO */}
-        <Link to="/" className="navbar-brand">
-          <svg className="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
-          </svg>
-          <span style={{ letterSpacing: '-0.5px' }}>StudyShare</span>
-        </Link>
+    <>
+      <style>{`
+        /* 1. LAYOUT & STABILITY */
+        .navbar {
+          width: 100%;
+          background: #ffffff;
+          position: sticky;
+          top: 0;
+          z-index: 1000;
+          box-sizing: border-box;
+          border-bottom: 1px solid #f0f0f0;
+        }
+
+        .nav-container {
+          width: 100%;
+          max-width: 1200px;
+          margin: 0 auto;
+          /* Padding: Top/Bottom 12px, Right 35px (pushes hamburger left), Left 10px (pushes logo left) */
+          padding: 12px 35px 12px 10px; 
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          box-sizing: border-box;
+        }
+
+        .navbar-brand {
+          display: flex;
+          align-items: center;
+          gap: 10px; /* Space between Book icon and StudyShare */
+          text-decoration: none;
+          color: #2d1b15;
+          flex-shrink: 0;
+        }
+
+        /* 2. ACTIVE HIGHLIGHT BOX (The Scroller/Highlighter) */
+        .active-link {
+          background-color: #6d4c41 !important;
+          color: #ffffff !important;
+          padding: 10px 20px !important;
+          border-radius: 8px;
+          font-weight: 700 !important;
+        }
+
+        /* 3. MOBILE UI ADJUSTMENTS */
+        @media (max-width: 768px) {
+          .nav-container {
+             padding: 10px 30px 10px 10px; 
+          }
+          
+          .brand-text {
+            font-size: 1.05rem !important;
+          }
+          
+          /* SPACE BETWEEN LOGO AND PROFILE */
+          .nav-right-group {
+            gap: 20px !important; 
+          }
+
+          .nav-username {
+            display: none !important; /* Keep username hidden on mobile top-bar */
+          }
+
+          .desktop-nav, .logout-btn-desktop {
+            display: none !important;
+          }
+        }
+
+        /* 4. FIXED FULL-SCREEN MENU */
+        .mobile-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100vh;
+          background-color: #ffffff; /* Solid white background */
+          display: ${isMenuOpen ? 'flex' : 'none'};
+          flex-direction: column;
+          align-items: center;
+          justify-content: flex-start; /* Start from top */
+          padding-top: 120px; /* Space for links */
+          z-index: 2000;
+          overflow-y: auto; /* Allows menu itself to scroll if items go off screen */
+        }
+
+        .mobile-links {
+          display: flex;
+          flex-direction: column;
+          gap: 2.2rem;
+          text-align: center;
+          margin-bottom: 3rem;
+          width: 100%;
+        }
+
+        .mobile-links a {
+          font-size: 1.6rem;
+          font-weight: 600;
+          text-decoration: none;
+          color: #2d1b15;
+          width: fit-content;
+          margin: 0 auto;
+          padding: 12px 24px;
+          transition: 0.3s ease;
+        }
+
+        .hamburger-icon {
+          background: none;
+          border: none;
+          cursor: pointer;
+          z-index: 2101; /* Must be higher than overlay */
+          color: #2d1b15;
+          padding: 5px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .desktop-nav {
+          display: flex;
+          gap: 15px;
+          align-items: center;
+        }
         
-        {/* LAPTOP NAVIGATION */}
-        <div className="nav-links">
-          {renderNavLinks(false)}
-        </div>
+        .desktop-nav a {
+          text-decoration: none;
+          color: #4a3728;
+          font-weight: 500;
+          padding: 8px 12px;
+        }
+      `}</style>
 
-        {/* LAPTOP AUTH */}
-        <div className="nav-auth" style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-          {user ? (
-            <>
-              {/* Profile Icon + Name Wrapper */}
-              <Link to="/profile" style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: '10px', 
-                textDecoration: 'none',
-                color: 'inherit',
-                padding: '5px 10px',
-                borderRadius: '12px',
-                transition: 'background 0.2s'
-              }} className="nav-profile-link">
-                <div style={{
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '50%',
-                  backgroundColor: 'var(--secondary)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: 'var(--primary)'
-                }}>
-                  <User size={18} />
+      <nav className="navbar">
+        <div className="nav-container">
+          {/* LOGO (Further Left) */}
+          <Link to="/" className="navbar-brand">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+            </svg>
+            <span className="brand-text" style={{fontWeight: 800}}>StudyShare</span>
+          </Link>
+
+          {/* DESKTOP LINKS */}
+          <div className="desktop-nav">
+            {renderNavLinks(false)}
+          </div>
+
+          {/* RIGHT SIDE SECTION */}
+          <div className="nav-right-group" style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+            {user && (
+              <Link to="/profile" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
+                <div style={{ width: '34px', height: '34px', borderRadius: '50%', background: '#f5f1ee', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <User size={18} color="#6d4c41" />
                 </div>
-                <span className="nav-user-info" style={{ fontWeight: '600' }}>
-                  {user.username}
-                  <span className="role-badge" style={{ 
-                    marginLeft: '8px', 
-                    fontSize: '0.65rem', 
-                    padding: '2px 8px', 
-                    borderRadius: '10px', 
-                    background: '#6d4c41', 
-                    color: 'white' 
-                  }}>
-                    {user.role}
-                  </span>
-                </span>
+                {/* Username shows on laptop, hidden on mobile by CSS */}
+                <span className="nav-username" style={{ fontWeight: '600', fontSize: '0.9rem', marginLeft: '10px' }}>{user.username}</span>
               </Link>
-
-              <button onClick={handleLogout} className="btn btn-ghost btn-sm">Logout</button>
-            </>
-          ) : (
-            <>
-              <Link to="/login" className="btn btn-ghost btn-sm">Log in</Link>
-              <Link to="/signup" className="btn btn-primary btn-sm">Sign up</Link>
-            </>
-          )}
-        </div>
-        {/* MOBILE HAMBURGER BUTTON */}
-        <button className="hamburger" onClick={toggleMenu} aria-label="Toggle menu" style={{ zIndex: 110 }}>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            {isMenuOpen ? (
-              <path d="M18 6L6 18M6 6l12 12" /> 
-            ) : (
-              <path d="M3 12h18M3 6h18M3 18h18" />
             )}
-          </svg>
-        </button>
 
-        {/* MOBILE MENU OVERLAY */}
-        <div className={`mobile-menu ${isMenuOpen ? 'show' : ''}`} style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100vh',
-          zIndex: 100,
-          display: isMenuOpen ? 'flex' : 'none',
-          flexDirection: 'column',
-          backgroundColor: 'var(--card)',
-          padding: '100px 1.5rem 2rem', // Increased top padding for better breathing room
-          textAlign: 'center',
-          transition: 'all 0.3s ease'
-        }}>
-          {/* Main Links Area - Increased Gap and Font Size */}
-          <div className="nav-links" style={{ 
-            display: 'flex', 
-            flexDirection: 'column', 
-            gap: '2rem', // More space between links
-            marginBottom: '3rem' 
-          }}>
+            {user && (
+              <button onClick={handleLogout} className="logout-btn-desktop" style={{ background: 'none', border: '1px solid #ddd', padding: '5px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '0.85rem' }}>
+                Logout
+              </button>
+            )}
+
+            {/* HAMBURGER (Nudged further left via container padding) */}
+            <button className="hamburger-icon" onClick={toggleMenu} aria-label="Toggle Menu">
+              {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
+            </button>
+          </div>
+        </div>
+
+        {/* FULL SCREEN OVERLAY (Covers background content entirely) */}
+        <div className="mobile-overlay">
+          <div className="mobile-links">
             {renderNavLinks(true)}
           </div>
-
-          {/* Auth Area - Fixed Size and Large Buttons */}
-          <div className="nav-auth" style={{ 
-            display: 'flex', 
-            flexDirection: 'column', 
-            gap: '1rem',
-            borderTop: '1px solid var(--border)',
-            paddingTop: '2.5rem',
-            width: '100%',
-            maxWidth: '320px',
-            margin: '0 auto'
-          }}>
+          
+          <div style={{width: '75%', borderTop: '1px solid #eee', paddingTop: '30px', textAlign: 'center'}}>
             {user ? (
-              <>
-                <div style={{ marginBottom: '0.5rem', color: 'var(--muted-foreground)', fontSize: '1.1rem' }}>
-                  Logged in as <strong style={{color: 'var(--primary)'}}>{user.username || user.name}</strong>
-                </div>
-                <button onClick={handleLogout} className="btn btn-destructive btn-full" style={{ borderRadius: '12px', height: '56px', fontSize: '1.2rem', fontWeight: '700' }}>
-                  Logout Account
-                </button>
-              </>
+              <button onClick={handleLogout} style={{ width: '100%', padding: '16px', background: '#6d4c41', color: 'white', border: 'none', borderRadius: '12px', fontWeight: 700, fontSize: '1.1rem' }}>
+                Logout Account
+              </button>
             ) : (
-              <>
-                <Link to="/login" className="btn btn-outline btn-full" style={{ borderRadius: '12px', height: '56px', fontSize: '1.2rem', fontWeight: '700' }}>
-                  Log in
-                </Link>
-                <Link to="/signup" className="btn btn-primary btn-full" style={{ borderRadius: '12px', height: '56px', fontSize: '1.2rem', fontWeight: '700' }}>
-                  Sign up for Free
-                </Link>
-              </>
+              <Link to="/login" style={{ textDecoration: 'none', color: '#6d4c41', fontWeight: '700', fontSize: '1.2rem' }}>Log In</Link>
             )}
           </div>
         </div>
-      </div>
-    </nav>
+      </nav>
+    </>
   );
 };
 
