@@ -53,22 +53,27 @@ exports.uploadMaterial = async (req, res) => {
         if (!req.file) {
             return res.status(400).json({ error: "No file uploaded or file type not supported." });
         }
+
+        // With multer-storage-cloudinary, req.file.path should be the HTTPS URL
+        // If it starts with /opt/render, it means it saved to disk instead of cloud
+        const file_url = req.file.path; 
+        
+        console.log("DEBUG: File path received:", file_url); 
+
         const { title, description, category } = req.body;
         const uploader_id = req.user.id; 
-        const file_url = req.file.path;  
 
-        // Fetching username manually ensures no 'undefined' in the logs
         const [userRows] = await db.query("SELECT username FROM users WHERE id = ?", [uploader_id]);
         const actualName = userRows[0]?.username || "A User";
 
         const sql = `INSERT INTO materials (title, description, file_url, category, uploader_id) VALUES (?, ?, ?, ?, ?)`;
         await db.query(sql, [title, description, file_url, category, uploader_id]);
 
-        // Successfully logs the REAL name
         await logAction(`${actualName} uploaded a new material: "${title}"`);
 
         res.status(201).json({ message: "Upload Successful" });
     } catch (err) {
+        console.error("Upload Controller Error:", err);
         res.status(500).json({ error: err.message });
     }
 };

@@ -7,8 +7,7 @@ const upload = require('../middleware/uploadMiddleware');
 const { optionalAuth } = require('../middleware/authMiddleware');
 router.get('/explore',optionalAuth,  materialController.getApprovedMaterials);
 
-// Increment Stat: Call this via axios when the download button is clicked 
-router.patch('/download/:id', verifyToken, materialController.trackDownload);
+router.patch('/download/:id', materialController.trackDownload);
 // User sees their own history 
 router.get('/my-uploads', verifyToken, materialController.getMyMaterials);
 

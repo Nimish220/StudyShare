@@ -154,7 +154,7 @@ const Dashboard = () => {
                       <p style={{ color: '#b0a4a2', fontSize: '0.9rem' }}>by {m.author}</p>
                     </div>
                     <div style={{ borderTop: '1px solid #f5f2f0', paddingTop: '15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: '0.85rem', color: '#b0a4a2' }}>📥 {m.download_count || 0} views</span>
+                      <span style={{ fontSize: '0.85rem', color: '#b0a4a2' }}>📥 {m.download_count || 0} downloads</span>
                       <span style={{ fontWeight: 'bold', color: '#f1c40f' }}>
                         {displayStars}
                       </span>

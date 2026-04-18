@@ -99,7 +99,8 @@ useEffect(() => {
   const handleDownload = async (id, fileUrl) => {
   try {
     // 1. Update the download/view count in your MySQL DB via your backend API
-    await axios.patch(`${import.meta.env.VITE_API_URL}/api/materials/download/${id}`);
+    const token = sessionStorage.getItem('token');
+    await axios.patch(`${import.meta.env.VITE_API_URL}/api/materials/download/${id}`, {}, { headers: getHeaders() });
 
     // 2. Open the file in a new tab
     // We REMOVED `${import.meta.env.VITE_API_URL}/` because fileUrl is now a full Cloudinary HTTPS link
