@@ -269,6 +269,21 @@ useEffect(() => {
                         <span style={{ fontSize: '10px', fontWeight: '700', color: '#2196f3', background: '#e3f2fd', padding: '4px 10px', borderRadius: '6px', textTransform: 'uppercase' }}>
                           {m.category}
                         </span>
+                        {viewMode === 'my-uploads' && (
+                            <span style={{ 
+                              fontSize: '10px', 
+                              fontWeight: '700', 
+                              padding: '4px 10px', 
+                              borderRadius: '6px', 
+                              textTransform: 'uppercase',
+                              backgroundColor: m.status === 'approved' ? '#e8f5e9' : m.status === 'rejected' ? '#ffebee' : '#fff3e0',
+                              color: m.status === 'approved' ? '#2e7d32' : m.status === 'rejected' ? '#c62828' : '#ef6c00',
+                              marginLeft: 'auto',
+                              marginRight: '10px'
+                            }}>
+                              {m.status || 'Under Observation'}
+                            </span>
+                          )}
                         <div style={{ display: 'flex', gap: '12px' }}>
                           <button onClick={() => handleReport(m.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#b0a4a2', padding: 0 }}>🚩</button>
                           <button onClick={() => handleBookmarkToggle(m.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
