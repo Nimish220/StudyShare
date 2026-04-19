@@ -222,30 +222,33 @@ useEffect(() => {
             flexWrap: 'wrap',
             width: '100%'
           }}>
-            <input 
-              type="text" 
-              placeholder="Search by title..." 
-              style={{ flex: '1 1 100%', border: '1px solid #ddd', padding: '12px', fontSize: '16px', outline: 'none', borderRadius: '10px' }} 
-              value={searchQuery} 
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && fetchMaterials()}
-            />
-            <button 
-              onClick={fetchMaterials} 
-              style={{ backgroundColor: '#6d4c41', color: 'white', border: 'none', padding: '12px 25px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '16px' }}
-            >
-              Search
-            </button>
+
+            <form onSubmit={(e) => { e.preventDefault(); fetchMaterials(); }}
+              style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap', width: '100%'}}>
             
-            <select 
-              style={{ flex: '1 1 150px', padding: '12px', borderRadius: '10px', border: '1px solid #ddd', fontSize: '16px', backgroundColor: 'white' }} 
-              value={activeCategory} 
-              onChange={(e) => setActiveCategory(e.target.value)}
-            >
-              {allCategories.map(cat => (
-                <option key={cat} value={cat}>{cat}</option>
-              ))}
-            </select>
+              <input 
+                type="text" 
+                placeholder="Search by title..." 
+                style={{ flex: '1 1 100%', border: '1px solid #ddd', padding: '12px', fontSize: '16px', outline: 'none', borderRadius: '10px' }} 
+                value={searchQuery} 
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              <div style={{ display: 'flex', gap: '10px', width: '100%' }}>
+                <button type="submit" style={{ flex: 2, backgroundColor: '#6d4c41', color: 'white', border: 'none', padding: '12px', borderRadius: '10px', cursor: 'pointer', fontWeight: 'bold', fontSize: '16px' }}>
+                  Search
+                </button>
+
+                <select 
+                  style={{ flex: '1 1 150px', padding: '12px', borderRadius: '10px', border: '1px solid #ddd', fontSize: '16px', backgroundColor: 'white' }} 
+                  value={activeCategory} 
+                  onChange={(e) => setActiveCategory(e.target.value)}
+                >
+                  {allCategories.map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+              </div>
+            </form>  
           </div>
         </header>
 
@@ -354,60 +357,60 @@ useEffect(() => {
 
       {/* RATING MODAL (Remains similar but mobile scaled) */}
       {showRateModal && (
-  <div style={modalOverlayStyle}>
-    <div style={modalContentStyle()}>
-      <h2 style={{ fontSize: '1.8rem', color: '#3e2723', marginBottom: '8px', fontFamily: 'serif' }}>Rate Resource</h2>
-      <p style={{ color: '#8d7b77', marginBottom: '24px', fontSize: '0.9rem' }}>How helpful was this material?</p>
-      
-      {/* RATING SELECTOR WITH UP/DOWN BUTTONS */}
-      <div style={{ 
-  display: 'flex', 
-  alignItems: 'center', 
-  justifyContent: 'center', 
-  gap: '15px', // FIX 4: Reduced gap from 24px to 15px
-  background: '#fcfaf9', 
-  padding: '20px', 
-  borderRadius: '15px', 
-  marginBottom: '20px', 
-  border: '1px solid #eee' 
-}}>
- <button 
-  onClick={() => setUserRating(prev => Math.max(1, prev - 1))}
-  onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.9)'}
-  onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
-  onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'} // Reset if finger slides off
-  style={circleBtnStyle}
->
-  −
-</button>
+        <div style={modalOverlayStyle}>
+          <div style={modalContentStyle()}>
+            <h2 style={{ fontSize: '1.8rem', color: '#3e2723', marginBottom: '8px', fontFamily: 'serif' }}>Rate Resource</h2>
+            <p style={{ color: '#8d7b77', marginBottom: '24px', fontSize: '0.9rem' }}>How helpful was this material?</p>
+            
+            {/* RATING SELECTOR WITH UP/DOWN BUTTONS */}
+            <div style={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center', 
+        gap: '15px', // FIX 4: Reduced gap from 24px to 15px
+        background: '#fcfaf9', 
+        padding: '20px', 
+        borderRadius: '15px', 
+        marginBottom: '20px', 
+        border: '1px solid #eee' 
+      }}>
+      <button 
+        onClick={() => setUserRating(prev => Math.max(1, prev - 1))}
+        onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.9)'}
+        onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
+        onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'} // Reset if finger slides off
+        style={circleBtnStyle}
+      >
+        −
+      </button>
 
   
-  <div style={{ 
-    display: 'flex', 
-    flexDirection: 'column', 
-    alignItems: 'center', 
-    justifyContent: 'center',
-    minWidth: '90px', 
-    textAlign: 'center' 
-  }}>
-    <span style={{ fontSize: '2.8rem', fontWeight: '800', color: '#5d4037', lineHeight: '1' }}>
-      {userRating}
-    </span>
-    <div style={{ color: '#f1c40f', fontSize: '1.1rem', marginTop: '4px' }}>
-      {'⭐'.repeat(userRating)}
-    </div>
-  </div>
+        <div style={{ 
+          display: 'flex', 
+          flexDirection: 'column', 
+          alignItems: 'center', 
+          justifyContent: 'center',
+          minWidth: '90px', 
+          textAlign: 'center' 
+        }}>
+          <span style={{ fontSize: '2.8rem', fontWeight: '800', color: '#5d4037', lineHeight: '1' }}>
+            {userRating}
+          </span>
+          <div style={{ color: '#f1c40f', fontSize: '1.1rem', marginTop: '4px' }}>
+            {'⭐'.repeat(userRating)}
+          </div>
+        </div>
 
- <button 
-  onClick={() => setUserRating(prev => Math.min(5, prev + 1))}
-  onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.9)'}
-  onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
-  onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-  style={{...circleBtnStyle, background: '#5d4037', color: 'white'}}
->
-  +
-</button>
-</div>
+      <button 
+        onClick={() => setUserRating(prev => Math.min(5, prev + 1))}
+        onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.9)'}
+        onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
+        onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+        style={{...circleBtnStyle, background: '#5d4037', color: 'white'}}
+      >
+        +
+      </button>
+      </div>
 
       <textarea 
         placeholder="Comment..." 
@@ -431,48 +434,50 @@ useEffect(() => {
         >
           Submit
         </button>
-        <button 
-          onClick={() => setShowRateModal(false)} 
-          style={{ 
-            flex: 1, padding: '14px', borderRadius: '15px', border: 'none', 
-            background: '#f0edea', color: '#5d4037', fontWeight: '600', 
-            fontSize: '16px', cursor: 'pointer' 
-          }}
-        >
-          Cancel
-        </button>
+            <button 
+              onClick={() => setShowRateModal(false)} 
+              style={{ 
+                flex: 1, padding: '14px', borderRadius: '15px', border: 'none', 
+                background: '#f0edea', color: '#5d4037', fontWeight: '600', 
+                fontSize: '16px', cursor: 'pointer' 
+              }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
       </div>
-    </div>
-  </div>
-)}
+    )}
+
       {showReviewsModal && (
-  <div style={modalOverlayStyle}>
-    <div style={modalContentStyle()}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
-        <h2 style={{ color: '#2d1b18', fontFamily: 'serif' }}>Community Reviews</h2>
-        <button onClick={() => setShowReviewsModal(false)} style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: '1.5rem' }}>&times;</button>
+      <div style={modalOverlayStyle}>
+        <div style={modalContentStyle()}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
+            <h2 style={{ color: '#2d1b18', fontFamily: 'serif' }}>Community Reviews</h2>
+            <button onClick={() => setShowReviewsModal(false)} style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: '1.5rem' }}>&times;</button>
+          </div>
+          <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+            {reviews.length > 0 ? (
+              reviews.map((rev, i) => (
+                <div key={i} style={{ padding: '15px 0', borderBottom: '1px solid #eee' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
+                    <b style={{ color: '#5d4037' }}>{rev.username}</b>
+                    <span style={{ color: '#f1c40f' }}>⭐ {rev.rating}</span>
+                  </div>
+                  <p style={{ margin: 0, fontSize: '0.9rem', color: '#555' }}>{rev.comment || "No comment left."}</p>
+                </div>
+              ))
+            ) : (
+              <p style={{ textAlign: 'center', color: '#999' }}>No reviews yet.</p>
+            )}
+          </div>
+        </div>
       </div>
-      <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
-        {reviews.length > 0 ? (
-          reviews.map((rev, i) => (
-            <div key={i} style={{ padding: '15px 0', borderBottom: '1px solid #eee' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
-                <b style={{ color: '#5d4037' }}>{rev.username}</b>
-                <span style={{ color: '#f1c40f' }}>⭐ {rev.rating}</span>
-              </div>
-              <p style={{ margin: 0, fontSize: '0.9rem', color: '#555' }}>{rev.comment || "No comment left."}</p>
-            </div>
-          ))
-        ) : (
-          <p style={{ textAlign: 'center', color: '#999' }}>No reviews yet.</p>
-        )}
-      </div>
-    </div>
-  </div>
-)}
-    </main>
-  );
-};
+    )}
+        </main>
+      );
+    };
+
 const modalOverlayStyle = {
   position: 'fixed', 
   inset: 0, 
