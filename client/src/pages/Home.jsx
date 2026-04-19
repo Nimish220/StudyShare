@@ -34,7 +34,7 @@ const Home = () => {
       } catch (err) {
         console.error("Error fetching popular materials:", err);
       } finally {
-        setLoading(false);
+        setTimeout(() => setLoading(false), 300);
       }
     };
     fetchPopular();
@@ -42,10 +42,9 @@ const Home = () => {
 
   // DOWNLOAD/VIEW HANDLER
  const handleView = async (id, fileUrl) => {
-  // Check if user exists in sessionStorage
   const userString = sessionStorage.getItem('studyshare_user');
   const user = userString ? JSON.parse(userString) : null;
-
+  const token = sessionStorage.getItem('token');
   if (!user) {
     alert("Please Log In to view or download materials!");
     window.location.href = '/login'; // Or use useNavigate()
@@ -54,8 +53,10 @@ const Home = () => {
 
   try {
     // This will now only work if the user has a valid JWT token
-    await axios.patch(`${import.meta.env.VITE_API_URL}/api/materials/download/${id}`);
-    window.open(`${import.meta.env.VITE_API_URL}/${fileUrl}`, '_blank');
+    await axios.patch(`${import.meta.env.VITE_API_URL}/api/materials/download/${id}`,{}, {
+        headers: { Authorization: `Bearer ${token}` }
+    });
+   window.open(fileUrl, '_blank', 'noopener,noreferrer');
   } catch (err) {
     console.error("View failed:", err);
   }
@@ -63,6 +64,17 @@ const Home = () => {
 
   return (
     <main style={{ backgroundColor: palette.bg, minHeight: '100vh' }}>
+      <style>{`
+        @keyframes pulse {
+          0% { opacity: 1; }
+          50% { opacity: 0.5; }
+          100% { opacity: 1; }
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
       {/* HERO SECTION */}
       <section style={{ padding: '40px 20px', borderBottom: `1px solid ${palette.border}` }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto', textAlign: 'center' }}>
@@ -88,9 +100,19 @@ const Home = () => {
           </div>
           
           {loading ? (
-            <div style={{ textAlign: 'center', padding: '40px' }}>Loading real-time popular notes...</div>
-          ) : (
+            /* IMPROVED LOADING VIEW: 4 Placeholder boxes to prevent layout jump */
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
+              {[1, 2, 3, 4].map(i => (
+                <div key={i} style={{ height: '200px', background: '#eee', borderRadius: '12px', animate: 'pulse 1.5s infinite ease-in-out' }}></div>
+              ))}
+            </div>
+          ) : (
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', 
+              gap: '20px',
+              animation: 'fadeIn 0.5s ease-in' 
+            }}>
               {popularMaterials.map((m) => (
                 <div 
                   key={m.id} 
@@ -115,7 +137,6 @@ const Home = () => {
         </div>
       </section>
 
-      {/* EXPLORE BY SUBJECT */}
       {/* EXPLORE BY SUBJECT */}
       <section style={{ padding: '60px 20px', backgroundColor: palette.accentLight }}>
         <div style={{ maxWidth: '1000px', margin: '0 auto', textAlign: 'center' }}>
