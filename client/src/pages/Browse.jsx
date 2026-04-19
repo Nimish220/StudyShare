@@ -30,7 +30,11 @@ const Browse = () => {
   // 1. Define the function with useCallback so it doesn't change on every render
 const fetchMaterials = useCallback(async () => {
   const currentToken = sessionStorage.getItem('token'); 
-  const fetchHeaders = currentToken ? { Authorization: `Bearer ${currentToken}` } : {};
+  if (!currentToken && viewMode === 'my-uploads') {
+      console.warn("No token found for private view");
+      return; 
+  }
+  const fetchHeaders = (currentToken && currentToken !== "null") ? { Authorization: `Bearer ${currentToken}` } : {};
   
   setLoading(true);
   try {
@@ -40,7 +44,7 @@ const fetchMaterials = useCallback(async () => {
 
     const res = await axios.get(url, {
       params: { search: searchQuery, category: activeCategory },
-      headers: getHeaders()
+      headers: fetchHeaders
     });
 
     const formattedData = res.data.map(item => ({
@@ -51,8 +55,10 @@ const fetchMaterials = useCallback(async () => {
 
     setMaterials(formattedData);
   } catch (err) {
+    if (err.response?.status === 401) {
+       console.error("Session expired on refresh");
+    }
     setMaterials([]);
-    console.error("Fetch error:", err);
   } finally {
     setLoading(false);
   }
