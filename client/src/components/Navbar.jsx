@@ -12,6 +12,7 @@ const Navbar = () => {
   useEffect(() => {
     setIsMenuOpen(false);
     document.body.style.overflow = 'unset'; 
+    return () => { document.body.style.overflow = 'unset'; };
   }, [location]);
 
   const toggleMenu = () => {
@@ -25,14 +26,26 @@ const Navbar = () => {
     window.location.href = '/login'; 
   };
 
+  // Helper function to handle class logic for all links
+  const getLinkClass = (path) => location.pathname === path ? 'active-link' : '';
+
   const renderNavLinks = (isMobile = false) => (
     <>
-      <Link to="/" className={location.pathname === '/' ? 'active-link' : ''}>Home</Link>
-      <Link to="/browse" className={location.pathname === '/browse' ? 'active-link' : ''}>Browse Library</Link>
+      <Link to="/" className={getLinkClass('/')}>Home</Link>
+      <Link to="/browse" className={getLinkClass('/browse')}>Browse Library</Link>
+      
+      {/* Laptop-only Guest Links (placed in main row per your request) */}
+      {!user && !isMobile && (
+        <>
+          <Link to="/login" className={getLinkClass('/login')}>Login</Link>
+          <Link to="/signup" className={getLinkClass('/signup')}>Sign Up</Link>
+        </>
+      )}
+
       {user?.role === 'student' && (
         <>
-          <Link to="/upload" className={location.pathname === '/upload' ? 'active-link' : ''}>Upload Notes</Link>
-          <Link to="/dashboard" className={location.pathname === '/dashboard' ? 'active-link' : ''}>Dashboard</Link>
+          <Link to="/upload" className={getLinkClass('/upload')}>Upload Notes</Link>
+          <Link to="/dashboard" className={getLinkClass('/dashboard')}>Dashboard</Link>
         </>
       )}
       {(user?.role === 'admin' || user?.role === 'superadmin') && (
@@ -79,7 +92,7 @@ const Navbar = () => {
           flex-shrink: 0;
         }
 
-        /* ACTIVE HIGHLIGHT BOX */
+        /* THE BROWN BOX (Shared for Desktop and Mobile) */
         .active-link {
           background-color: #6d4c41 !important;
           color: #ffffff !important;
@@ -88,21 +101,22 @@ const Navbar = () => {
           font-weight: 700 !important;
         }
 
-        /* DESKTOP STYLES */
         .desktop-nav {
           display: flex;
-          gap: 15px;
+          gap: 5px;
           align-items: center;
         }
         
         .desktop-nav a {
           text-decoration: none;
-          color: #4a3728;
-          font-weight: 500;
-          padding: 8px 12px;
+          color: #6d4c41;
+          font-weight: 600;
+          padding: 10px 20px; 
+          border-radius: 8px;
+          transition: 0.2s ease;
+          display: inline-block;
         }
 
-        /* HIDE HAMBURGER ON DESKTOP */
         .hamburger-icon {
           display: none; 
           background: none;
@@ -113,28 +127,14 @@ const Navbar = () => {
           padding: 5px;
         }
 
-        /* MOBILE STYLES (768px and down) */
         @media (max-width: 768px) {
-          /* Show hamburger only on mobile */
-          .hamburger-icon {
-            display: flex;
-          }
-
-          /* Hide desktop links and laptop logout */
+          .hamburger-icon { display: flex; }
           .desktop-nav, .logout-btn-desktop, .nav-username {
             display: none !important;
           }
-
-          .nav-container {
-             padding: 10px 30px 10px 10px; 
-          }
-
-          .nav-right-group {
-            gap: 20px !important;
-          }
+          .nav-container { padding: 10px 30px 10px 10px; }
         }
 
-        /* FULL SCREEN OVERLAY */
         .mobile-overlay {
           position: fixed;
           top: 0;
@@ -154,26 +154,25 @@ const Navbar = () => {
         .mobile-links {
           display: flex;
           flex-direction: column;
-          gap: 2.2rem;
+          gap: 1.5rem;
           text-align: center;
-          margin-bottom: 3rem;
           width: 100%;
         }
 
         .mobile-links a {
-          font-size: 1.6rem;
+          font-size: 1.4rem;
           font-weight: 600;
           text-decoration: none;
-          color: #2d1b15;
+          color: #6d4c41;
           width: fit-content;
           margin: 0 auto;
-          padding: 12px 24px;
+          padding: 10px 20px; /* Standard padding so box looks same when active */
+          border-radius: 8px;
         }
       `}</style>
 
       <nav className="navbar">
         <div className="nav-container">
-          {/* BRAND */}
           <Link to="/" className="navbar-brand">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
@@ -181,41 +180,42 @@ const Navbar = () => {
             <span className="brand-text" style={{fontWeight: 800}}>StudyShare</span>
           </Link>
 
-          {/* DESKTOP LINKS (Hidden on Mobile) */}
           <div className="desktop-nav">
             {renderNavLinks(false)}
           </div>
 
-          {/* RIGHT SIDE GROUP */}
           <div className="nav-right-group" style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
             {user && (
-              <Link to="/profile" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
-                <div style={{ width: '34px', height: '34px', borderRadius: '50%', background: '#f5f1ee', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <User size={18} color="#6d4c41" />
-                </div>
-                <span className="nav-username" style={{ fontWeight: '600', fontSize: '0.9rem', marginLeft: '10px' }}>{user.username}</span>
-              </Link>
+              <>
+                <Link to="/profile" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
+                  <div style={{ width: '34px', height: '34px', borderRadius: '50%', background: '#f5f1ee', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <User size={18} color="#6d4c41" />
+                  </div>
+                  <span className="nav-username" style={{ fontWeight: '600', fontSize: '0.9rem', marginLeft: '10px', color: '#6d4c41' }}>{user.username}</span>
+                </Link>
+                <button onClick={handleLogout} className="logout-btn-desktop" style={{ background: 'none', border: '1px solid #6d4c41', color: '#6d4c41', padding: '5px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '0.85rem' }}>
+                  Logout
+                </button>
+              </>
             )}
 
-            {user && (
-              <button onClick={handleLogout} className="logout-btn-desktop" style={{ background: 'none', border: '1px solid #ddd', padding: '5px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '0.85rem' }}>
-                Logout
-              </button>
-            )}
-
-            {/* HAMBURGER (Visible only on Mobile) */}
             <button className="hamburger-icon" onClick={toggleMenu}>
               {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
             </button>
           </div>
         </div>
 
-        {/* MOBILE MENU CONTENT */}
         <div className="mobile-overlay">
           <div className="mobile-links">
             {renderNavLinks(true)}
+            {!user && (
+              <>
+                <Link to="/login" className={getLinkClass('/login')}>Login</Link>
+                <Link to="/signup" className={getLinkClass('/signup')}>Sign Up</Link>
+              </>
+            )}
           </div>
-          <div style={{width: '75%', borderTop: '1px solid #eee', paddingTop: '30px', textAlign: 'center'}}>
+          <div style={{width: '75%', borderTop: '1px solid #eee', paddingTop: '30px', textAlign: 'center', marginTop: '20px'}}>
             {user && (
               <button onClick={handleLogout} style={{ width: '100%', padding: '16px', background: '#6d4c41', color: 'white', border: 'none', borderRadius: '12px', fontWeight: 700, fontSize: '1.1rem' }}>
                 Logout Account
