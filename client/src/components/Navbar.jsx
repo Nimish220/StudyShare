@@ -17,7 +17,6 @@ const Navbar = () => {
   const toggleMenu = () => {
     const newState = !isMenuOpen;
     setIsMenuOpen(newState);
-    // Lock background scroll when menu is open
     document.body.style.overflow = newState ? 'hidden' : 'unset';
   };
 
@@ -50,7 +49,6 @@ const Navbar = () => {
   return (
     <>
       <style>{`
-        /* 1. LAYOUT & STABILITY */
         .navbar {
           width: 100%;
           background: #ffffff;
@@ -65,8 +63,7 @@ const Navbar = () => {
           width: 100%;
           max-width: 1200px;
           margin: 0 auto;
-          /* Padding: Top/Bottom 12px, Right 35px (pushes hamburger left), Left 10px (pushes logo left) */
-          padding: 12px 35px 12px 10px; 
+          padding: 12px 20px;
           display: flex;
           justify-content: space-between;
           align-items: center;
@@ -76,13 +73,13 @@ const Navbar = () => {
         .navbar-brand {
           display: flex;
           align-items: center;
-          gap: 10px; /* Space between Book icon and StudyShare */
+          gap: 10px;
           text-decoration: none;
           color: #2d1b15;
           flex-shrink: 0;
         }
 
-        /* 2. ACTIVE HIGHLIGHT BOX (The Scroller/Highlighter) */
+        /* ACTIVE HIGHLIGHT BOX */
         .active-link {
           background-color: #6d4c41 !important;
           color: #ffffff !important;
@@ -91,45 +88,67 @@ const Navbar = () => {
           font-weight: 700 !important;
         }
 
-        /* 3. MOBILE UI ADJUSTMENTS */
+        /* DESKTOP STYLES */
+        .desktop-nav {
+          display: flex;
+          gap: 15px;
+          align-items: center;
+        }
+        
+        .desktop-nav a {
+          text-decoration: none;
+          color: #4a3728;
+          font-weight: 500;
+          padding: 8px 12px;
+        }
+
+        /* HIDE HAMBURGER ON DESKTOP */
+        .hamburger-icon {
+          display: none; 
+          background: none;
+          border: none;
+          cursor: pointer;
+          z-index: 2101;
+          color: #2d1b15;
+          padding: 5px;
+        }
+
+        /* MOBILE STYLES (768px and down) */
         @media (max-width: 768px) {
+          /* Show hamburger only on mobile */
+          .hamburger-icon {
+            display: flex;
+          }
+
+          /* Hide desktop links and laptop logout */
+          .desktop-nav, .logout-btn-desktop, .nav-username {
+            display: none !important;
+          }
+
           .nav-container {
              padding: 10px 30px 10px 10px; 
           }
-          
-          .brand-text {
-            font-size: 1.05rem !important;
-          }
-          
-          /* SPACE BETWEEN LOGO AND PROFILE */
+
           .nav-right-group {
-            gap: 20px !important; 
-          }
-
-          .nav-username {
-            display: none !important; /* Keep username hidden on mobile top-bar */
-          }
-
-          .desktop-nav, .logout-btn-desktop {
-            display: none !important;
+            gap: 20px !important;
           }
         }
 
-        /* 4. FIXED FULL-SCREEN MENU */
+        /* FULL SCREEN OVERLAY */
         .mobile-overlay {
           position: fixed;
           top: 0;
           left: 0;
           width: 100%;
           height: 100vh;
-          background-color: #ffffff; /* Solid white background */
+          background-color: #ffffff;
           display: ${isMenuOpen ? 'flex' : 'none'};
           flex-direction: column;
           align-items: center;
-          justify-content: flex-start; /* Start from top */
-          padding-top: 120px; /* Space for links */
+          justify-content: flex-start;
+          padding-top: 120px;
           z-index: 2000;
-          overflow-y: auto; /* Allows menu itself to scroll if items go off screen */
+          overflow-y: auto;
         }
 
         .mobile-links {
@@ -149,38 +168,12 @@ const Navbar = () => {
           width: fit-content;
           margin: 0 auto;
           padding: 12px 24px;
-          transition: 0.3s ease;
-        }
-
-        .hamburger-icon {
-          background: none;
-          border: none;
-          cursor: pointer;
-          z-index: 2101; /* Must be higher than overlay */
-          color: #2d1b15;
-          padding: 5px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-
-        .desktop-nav {
-          display: flex;
-          gap: 15px;
-          align-items: center;
-        }
-        
-        .desktop-nav a {
-          text-decoration: none;
-          color: #4a3728;
-          font-weight: 500;
-          padding: 8px 12px;
         }
       `}</style>
 
       <nav className="navbar">
         <div className="nav-container">
-          {/* LOGO (Further Left) */}
+          {/* BRAND */}
           <Link to="/" className="navbar-brand">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
@@ -188,19 +181,18 @@ const Navbar = () => {
             <span className="brand-text" style={{fontWeight: 800}}>StudyShare</span>
           </Link>
 
-          {/* DESKTOP LINKS */}
+          {/* DESKTOP LINKS (Hidden on Mobile) */}
           <div className="desktop-nav">
             {renderNavLinks(false)}
           </div>
 
-          {/* RIGHT SIDE SECTION */}
+          {/* RIGHT SIDE GROUP */}
           <div className="nav-right-group" style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
             {user && (
               <Link to="/profile" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
                 <div style={{ width: '34px', height: '34px', borderRadius: '50%', background: '#f5f1ee', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <User size={18} color="#6d4c41" />
                 </div>
-                {/* Username shows on laptop, hidden on mobile by CSS */}
                 <span className="nav-username" style={{ fontWeight: '600', fontSize: '0.9rem', marginLeft: '10px' }}>{user.username}</span>
               </Link>
             )}
@@ -211,26 +203,23 @@ const Navbar = () => {
               </button>
             )}
 
-            {/* HAMBURGER (Nudged further left via container padding) */}
-            <button className="hamburger-icon" onClick={toggleMenu} aria-label="Toggle Menu">
+            {/* HAMBURGER (Visible only on Mobile) */}
+            <button className="hamburger-icon" onClick={toggleMenu}>
               {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
             </button>
           </div>
         </div>
 
-        {/* FULL SCREEN OVERLAY (Covers background content entirely) */}
+        {/* MOBILE MENU CONTENT */}
         <div className="mobile-overlay">
           <div className="mobile-links">
             {renderNavLinks(true)}
           </div>
-          
           <div style={{width: '75%', borderTop: '1px solid #eee', paddingTop: '30px', textAlign: 'center'}}>
-            {user ? (
+            {user && (
               <button onClick={handleLogout} style={{ width: '100%', padding: '16px', background: '#6d4c41', color: 'white', border: 'none', borderRadius: '12px', fontWeight: 700, fontSize: '1.1rem' }}>
                 Logout Account
               </button>
-            ) : (
-              <Link to="/login" style={{ textDecoration: 'none', color: '#6d4c41', fontWeight: '700', fontSize: '1.2rem' }}>Log In</Link>
             )}
           </div>
         </div>
