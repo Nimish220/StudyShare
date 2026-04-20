@@ -1,5 +1,5 @@
 const db = require('../config/db');
-
+const { logAction } = require('./superAdminController'); // Import the helper
 // Fetch only approved materials with Unique Ratings and Bookmark Status
 exports.getApprovedMaterials = async (req, res) => {
     try {
@@ -46,7 +46,7 @@ exports.getApprovedMaterials = async (req, res) => {
     }
 };
 
-const { logAction } = require('./superAdminController'); // Import the helper
+
 
 exports.uploadMaterial = async (req, res) => {
     try {
