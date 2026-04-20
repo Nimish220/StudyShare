@@ -127,7 +127,7 @@ const Signup = () => {
                             <input 
                                 type={showConfirmPassword ? "text" : "password"} 
                                 style={{ width: '100%', padding: '12px 45px 12px 12px', borderRadius: '12px', border: '1px solid #E8E2E0', fontSize: '16px' }}
-                                placeholder="Repeat password"
+                                placeholder="••••••••"
                                 value={formData.confirmPassword}
                                 onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})} 
                                 required 
