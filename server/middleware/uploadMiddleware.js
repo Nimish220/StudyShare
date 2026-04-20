@@ -15,19 +15,19 @@ cloudinary.config({
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: async (req, file) => {
-    const ext = path.extname(file.originalname); 
-    const publicId = Date.now() + '-' + file.originalname.split('.')[0];
+    const fileExt = path.extname(file.originalname).toLowerCase(); // .pptx
+    const fileName = path.parse(file.originalname).name;
     return {
       folder: 'studyshare_materials',
-      resource_type: 'auto', // Correctly handles PDF, DOCX, and Images
-      public_id: publicId, 
-      format: ext.replace('.', '')
+      resource_type: 'raw',
+      public_id: `${fileName}-${Date.now()}${fileExt}`,
     };
   },
 });
 
 // 2. Filter file types (Remains mostly the same, but good to keep)
 const fileFilter = (req, file, cb) => {
+    console.log("MIME TYPE DETECTED:", file.mimetype);
     const fileTypes = /jpeg|jpg|png|pdf|docx|doc|pptx/;
     const extName = fileTypes.test(path.extname(file.originalname).toLowerCase());
     const mimeType = fileTypes.test(file.mimetype);
