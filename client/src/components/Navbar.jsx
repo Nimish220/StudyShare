@@ -32,10 +32,11 @@ const Navbar = () => {
   const renderNavLinks = (isMobile = false) => (
     <>
       <Link to="/" className={getLinkClass('/')}>Home</Link>
-      <Link to="/browse" className={getLinkClass('/browse')}>Browse Library</Link>
+      {user && (
+        <Link to="/browse" className={getLinkClass('/browse')}>Browse Library</Link>
+      )}
       
-      {/* Laptop-only Guest Links (placed in main row per your request) */}
-      {!user && !isMobile && (
+      {!user && (
         <>
           <Link to="/login" className={getLinkClass('/login')}>Login</Link>
           <Link to="/signup" className={getLinkClass('/signup')}>Sign Up</Link>
@@ -181,7 +182,7 @@ const Navbar = () => {
           </Link>
 
           <div className="desktop-nav">
-            {renderNavLinks(false)}
+            {renderNavLinks()}
           </div>
 
           <div className="nav-right-group" style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
@@ -207,13 +208,7 @@ const Navbar = () => {
 
         <div className="mobile-overlay">
           <div className="mobile-links">
-            {renderNavLinks(true)}
-            {!user && (
-              <>
-                <Link to="/login" className={getLinkClass('/login')}>Login</Link>
-                <Link to="/signup" className={getLinkClass('/signup')}>Sign Up</Link>
-              </>
-            )}
+            {renderNavLinks()}
           </div>
           <div style={{width: '75%', borderTop: '1px solid #eee', paddingTop: '30px', textAlign: 'center', marginTop: '20px'}}>
             {user && (
