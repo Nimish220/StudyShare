@@ -50,30 +50,66 @@ exports.getApprovedMaterials = async (req, res) => {
 
 exports.uploadMaterial = async (req, res) => {
     try {
+        console.log("========== UPLOAD START ==========");
+
+        console.log("FILE:", req.file);
+        console.log("BODY:", req.body);
+        console.log("USER:", req.user);
+
         if (!req.file) {
-            return res.status(400).json({ error: "No file uploaded or file type not supported." });
+            console.log("❌ No file received");
+            return res.status(400).json({ error: "No file uploaded" });
         }
 
-        // With multer-storage-cloudinary, req.file.path should be the HTTPS URL
-        // If it starts with /opt/render, it means it saved to disk instead of cloud
-        const file_url = req.file.path; 
-        
-        console.log("DEBUG: File path received:", file_url); 
+        if (!req.user) {
+            console.log("❌ User missing");
+            return res.status(401).json({ error: "Unauthorized" });
+        }
 
-        const { title, description, category,tags } = req.body;
-        const uploader_id = req.user.id; 
+        const file_url = req.file.path || req.file.url;
+        console.log("✅ File URL:", file_url);
 
-        const [userRows] = await db.query("SELECT username FROM users WHERE id = ?", [uploader_id]);
+        const { title, description, category, tags } = req.body;
+
+        if (!title || !category) {
+            console.log("❌ Missing fields");
+            return res.status(400).json({ error: "Missing required fields" });
+        }
+
+        const uploader_id = req.user.id;
+
+        console.log("➡️ Fetching user...");
+        const [userRows] = await db.query(
+            "SELECT username FROM users WHERE id = ?",
+            [uploader_id]
+        );
+
         const actualName = userRows[0]?.username || "A User";
+        console.log("✅ User found:", actualName);
 
-        const sql = `INSERT INTO materials (title, description, file_url, category, uploader_id, tags) VALUES (?, ?, ?, ?, ?, ?)`;
-        await db.query(sql, [title, description, file_url, category, uploader_id, tags || '']);
+        console.log("➡️ Inserting into DB...");
+        await db.query(
+            `INSERT INTO materials 
+            (title, description, file_url, category, uploader_id, tags) 
+            VALUES (?, ?, ?, ?, ?, ?)`,
+            [title, description, file_url, category, uploader_id, tags || '']
+        );
 
-        await logAction(`${actualName} uploaded a new material: "${title}"`,uploader_id);
+        console.log("✅ DB Insert success");
+
+        await logAction(
+            `${actualName} uploaded a new material: "${title}"`,
+            uploader_id
+        );
+
+        console.log("✅ Log action success");
+
+        console.log("========== UPLOAD END ==========");
 
         res.status(201).json({ message: "Upload Successful" });
+
     } catch (err) {
-        console.error("Upload Controller Error:", err);
+        console.error("🔥 UPLOAD ERROR FULL:", err);
         res.status(500).json({ error: err.message });
     }
 };
