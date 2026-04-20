@@ -4,6 +4,9 @@ const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const multer = require('multer');
 const path = require('path');
 
+console.log("Cloud:", process.env.CLOUDINARY_CLOUD_NAME);
+console.log("Key:", process.env.CLOUDINARY_API_KEY ? "OK" : "MISSING");
+console.log("Secret:", process.env.CLOUDINARY_API_SECRET ? "OK" : "MISSING");
 // Configure Cloudinary
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -20,7 +23,8 @@ const storage = new CloudinaryStorage({
     return {
       folder: 'studyshare_materials',
       resource_type: 'raw',
-      public_id: `${fileName}-${Date.now()}${fileExt}`,
+      public_id: `${fileName}-${Date.now()}`,
+      format: fileExt.replace('.', '')
     };
   },
 });
