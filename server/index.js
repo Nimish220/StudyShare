@@ -18,20 +18,11 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 const adminRoutes = require('./routes/adminRoutes');
 app.use('/api/admin', adminRoutes);
 app.use('/api/auth', authRoutes);
-const materialController = require('./controllers/materialController');
-const { verifyToken } = require('./middleware/authMiddleware');
-const upload = require('./middleware/uploadMiddleware');
 const materialRoutes = require('./routes/materialRoutes');
 const superAdminRoutes = require('./routes/superAdminRoutes');
 const multer = require('multer');
 app.use('/api/materials', materialRoutes);
 // Workflow: Login -> Verify Token -> Save File -> Save Metadata
-app.post(
-    '/api/materials/upload', 
-    verifyToken,                   // 1. Check if user is logged in
-    upload.single('materialFile'),     // 2. Save file to /uploads
-    materialController.uploadMaterial  // 3. Save details to MySQL
-);
 app.use('/api/super', superAdminRoutes);
 
 app.use((err, req, res, next) => {

@@ -60,16 +60,16 @@ exports.uploadMaterial = async (req, res) => {
         
         console.log("DEBUG: File path received:", file_url); 
 
-        const { title, description, category } = req.body;
+        const { title, description, category,tags } = req.body;
         const uploader_id = req.user.id; 
 
         const [userRows] = await db.query("SELECT username FROM users WHERE id = ?", [uploader_id]);
         const actualName = userRows[0]?.username || "A User";
 
-        const sql = `INSERT INTO materials (title, description, file_url, category, uploader_id) VALUES (?, ?, ?, ?, ?)`;
-        await db.query(sql, [title, description, file_url, category, uploader_id]);
+        const sql = `INSERT INTO materials (title, description, file_url, category, uploader_id, tags) VALUES (?, ?, ?, ?, ?, ?)`;
+        await db.query(sql, [title, description, file_url, category, uploader_id, tags || '']);
 
-        await logAction(`${actualName} uploaded a new material: "${title}"`);
+        await logAction(`${actualName} uploaded a new material: "${title}"`,uploader_id);
 
         res.status(201).json({ message: "Upload Successful" });
     } catch (err) {
