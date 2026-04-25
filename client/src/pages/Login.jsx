@@ -118,7 +118,7 @@ const Login = () => {
           <div className="form-group">
             <div className="form-row">
               <label htmlFor="password">Password</label>
-              <a href="#">Forgot Password?</a>
+              <a href="/forgot-password">Forgot Password?</a>
             </div>
             {/* Added container for relative positioning of the eye icon */}
             <div style={{ position: 'relative' }}>
