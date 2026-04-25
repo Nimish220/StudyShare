@@ -2,6 +2,17 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { User, Mail, Lock, Eye, EyeOff, ShieldCheck } from 'lucide-react';
 
+const validateEmail = (email) => {
+  if (!email.endsWith('@gmail.com')) return "Only Gmail addresses are allowed.";
+  return null;
+};
+
+const validatePassword = (pass) => {
+  if (pass.length < 6) return "Password must be at least 6 characters.";
+  if (!/\d/.test(pass)) return "Password must contain at least one number.";
+  return null;
+};
+
 const Profile = () => {
   const user = JSON.parse(sessionStorage.getItem('studyshare_user')) || {};
   const token = sessionStorage.getItem('token');
@@ -13,7 +24,7 @@ const Profile = () => {
     newPassword: '',
     confirmPassword: ''
   });
-
+  const [errors, setErrors] = useState({});
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -28,31 +39,61 @@ const Profile = () => {
 
   const handleUpdate = async (e) => {
     e.preventDefault();
-    if (!formData.currentPassword) return alert("Current password is required to verify changes.");
-    if (formData.newPassword && formData.newPassword !== formData.confirmPassword) {
-      return alert("New passwords do not match!");
+    let newErrors = {};
+
+    // 1. Gmail Validation
+    const emailErr = validateEmail(formData.email);
+    if (emailErr) newErrors.email = emailErr;
+    
+    // 2. Current Password Validation (Mandatory)
+    if (!formData.currentPassword) {
+        newErrors.currentPassword = "Required to verify changes.";
     }
 
+    // 3. New Password Validations (Only if user types a new password)
+    if (formData.newPassword) {
+        const passError = validatePassword(formData.newPassword);
+        if (passError) newErrors.newPassword = passError;
+
+        if (formData.newPassword !== formData.confirmPassword) {
+            newErrors.confirmPassword = "Passwords do not match!";
+        }
+    }
+
+    // Stop if any errors found
+    if (Object.keys(newErrors).length > 0) {
+        setErrors(newErrors);
+        return;
+    }
+
+    setErrors({});
     setLoading(true);
+
     try {
       const res = await axios.put(
         `${import.meta.env.VITE_API_URL}/api/users/update-profile`,
         formData,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      alert(res.data.message);
+      
+      alert(res.data.message); // Success alert is fine
       const updatedUser = { ...user, username: formData.username, email: formData.email };
       sessionStorage.setItem('studyshare_user', JSON.stringify(updatedUser));
+      
       if (formData.newPassword) {
         sessionStorage.clear();
         window.location.href = '/login';
       }
     } catch (err) {
-      alert(err.response?.data?.error || "Update failed.");
+      // Catch specific backend errors (like "Incorrect current password")
+      setErrors({ currentPassword: err.response?.data?.error || "Update failed." });
     } finally {
       setLoading(false);
     }
   };
+  const ErrorMsg = ({ text }) => text ? (
+        <span style={{ color: '#D32F2F', fontSize: '11px', fontWeight: 'bold' }}> - {text}</span>
+  ) : null;
 
   // Inline Styles
   const mainStyle = {
@@ -167,9 +208,10 @@ const Profile = () => {
           </div>
 
           <div style={inputContainer}>
-            <label style={labelStyle}>Email Address</label>
-            <div style={inputWrapper}>
-              <Mail size={18} color="#b0a4a2" />
+            <label style={labelStyle}>Email Address <ErrorMsg text={errors.email} /></label>
+            <div style={{...inputWrapper, 
+                border: errors.email ? '1px solid #D32F2F' : '1px solid #f0edeb'}}>
+              <Mail size={18} color={errors.email ? "#D32F2F" : "#b0a4a2"} />
               <input 
                 style={inputField} 
                 type="email" 
@@ -196,8 +238,11 @@ const Profile = () => {
 
           {/* Current Password */}
           <div style={inputContainer}>
-            <label style={labelStyle}>Current Password (Required)</label>
-            <div style={inputWrapper}>
+            <label style={labelStyle}>Current Password (Required) <ErrorMsg text={errors.currentPassword} /></label>
+            <div style={{ 
+                  ...inputWrapper, 
+                  border: errors.currentPassword ? '1px solid #D32F2F' : '1px solid #f0edeb' 
+                }}>
               <Lock size={18} color="#b0a4a2" />
               <input 
                 style={inputField} 
@@ -218,43 +263,39 @@ const Profile = () => {
 
           {/* New Password */}
           <div style={inputContainer}>
-            <label style={labelStyle}>New Password</label>
-            <div style={inputWrapper}>
-              <Lock size={18} color="#b0a4a2" />
-              <input 
-                style={inputField} 
-                type={showNew ? "text" : "password"} 
-                placeholder="********"
-                onChange={(e) => setFormData({...formData, newPassword: e.target.value})} 
-              />
-              <button 
-                type="button" 
-                className="eye-btn"
-                onClick={() => setShowNew(!showNew)} 
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#b0a4a2', padding: '5px' }}
-              >
-                {showNew ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
+              <label style={labelStyle}>New Password <ErrorMsg text={errors.newPassword} /></label>
+              <div style={{ 
+                  ...inputWrapper, 
+                  border: errors.newPassword ? '1px solid #D32F2F' : '1px solid #f0edeb' 
+              }}>
+                <Lock size={18} color={errors.newPassword ? "#D32F2F" : "#b0a4a2"} />
+                <input 
+                  style={inputField} 
+                  type={showNew ? "text" : "password"} 
+                  placeholder="********" 
+                  onChange={(e) => setFormData({...formData, newPassword: e.target.value})} 
+                />
+                <button type="button" onClick={() => setShowNew(!showNew)} className="eye-btn" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#b0a4a2', padding: '5px' }}>
+                  {showNew ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </div>
-          </div>
 
           {/* Confirm Password */}
           <div style={inputContainer}>
-            <label style={labelStyle}>Confirm New Password</label>
-            <div style={inputWrapper}>
-              <Lock size={18} color="#b0a4a2" />
+            <label style={labelStyle}>Confirm New Password <ErrorMsg text={errors.confirmPassword} /></label>
+            <div style={{ 
+                ...inputWrapper, 
+                border: errors.confirmPassword ? '1px solid #D32F2F' : '1px solid #f0edeb' 
+            }}>
+              <Lock size={18} color={errors.confirmPassword ? "#D32F2F" : "#b0a4a2"} />
               <input 
                 style={inputField} 
                 type={showConfirm ? "text" : "password"} 
-                placeholder="********"
+                placeholder="********" 
                 onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})} 
               />
-              <button 
-                type="button" 
-                className="eye-btn"
-                onClick={() => setShowConfirm(!showConfirm)} 
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#b0a4a2', padding: '5px' }}
-              >
+              <button type="button" onClick={() => setShowConfirm(!showConfirm)} className="eye-btn" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#b0a4a2', padding: '5px' }}>
                 {showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
