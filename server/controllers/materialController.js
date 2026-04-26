@@ -36,7 +36,7 @@ exports.getApprovedMaterials = async (req, res) => {
         }
 
         // Grouping is REQUIRED for unique aggregate functions (AVG/COUNT)
-        query += " GROUP BY m.id, u.username ORDER BY m.created_at DESC";
+        query += " GROUP BY m.id, u.username ORDER BY m.uploaded_at DESC";
 
         const [materials] = await db.query(query, params);
         res.json(materials);
@@ -136,6 +136,7 @@ exports.getMyMaterials = async (req, res) => {
             LEFT JOIN reviews r ON m.id = r.material_id
             WHERE m.uploader_id = ?
             GROUP BY m.id
+            ORDER BY m.uploaded_at DESC
         `;
         const [materials] = await db.query(query, [uploader_id]);
         res.json(materials);

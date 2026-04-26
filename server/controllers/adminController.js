@@ -25,6 +25,7 @@ exports.getPendingMaterials = async (req, res) => {
             FROM materials m 
             JOIN users u ON m.uploader_id = u.id 
             WHERE m.status = 'pending'
+            ORDER BY m.uploaded_at DESC
         `;
         const [materials] = await db.query(sql);
         res.json(materials);
@@ -145,7 +146,7 @@ exports.getReportedMaterials = async (req, res) => {
             FROM materials m 
             JOIN users u ON m.uploader_id = u.id 
             WHERE m.report_count > 0 
-            ORDER BY m.report_count DESC
+           ORDER BY m.report_count DESC, m.uploaded_at DESC
         `;
         const [materials] = await db.query(sql);
         res.json(materials);
@@ -161,7 +162,7 @@ exports.handleReportAction = async (req, res) => {
 
         // Fetch material title for the log
         const [[material]] = await db.query("SELECT title FROM materials WHERE id = ?", [material_id]);
-
+        if (!material) return res.status(404).json({ error: "Material not found" });
         if (action === 'dismiss') {
             await db.query("UPDATE materials SET report_count = 0 WHERE id = ?", [material_id]);
             await superAdminController.logAction(`Admin cleared reports for "${material.title}"`, adminId);

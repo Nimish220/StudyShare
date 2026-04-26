@@ -40,14 +40,16 @@ const AdminDashboard = () => {
   const fetchDashboardData = async () => {
     setLoading(true);
     try {
-      const [statsRes, pendingRes, usersRes, approvedRes, logsRes,reportedRes] = await Promise.all([
-        axios.get(`${API_BASE}/stats`, { headers }),
-        axios.get(`${API_BASE}/pending`, { headers }),
-        axios.get(`${API_BASE}/users`, { headers }),
-        axios.get(`${import.meta.env.VITE_API_URL}/api/materials/explore`, { headers }),
-        axios.get(`${API_BASE}/logs`, { headers }),
-        axios.get(`${API_BASE}/reported-materials`, { headers })
+      // Use catch() on each individual request so one failure doesn't kill the dashboard
+      const [statsRes, pendingRes, usersRes, approvedRes, logsRes, reportedRes] = await Promise.all([
+        axios.get(`${API_BASE}/stats`, { headers }).catch(e => ({ data: stats })),
+        axios.get(`${API_BASE}/pending`, { headers }).catch(e => ({ data: [] })),
+        axios.get(`${API_BASE}/users`, { headers }).catch(e => ({ data: [] })),
+        axios.get(`${import.meta.env.VITE_API_URL}/api/materials/explore`, { headers }).catch(e => ({ data: [] })),
+        axios.get(`${API_BASE}/logs`, { headers }).catch(e => ({ data: [] })),
+        axios.get(`${API_BASE}/reported-materials`, { headers }).catch(e => ({ data: [] }))
       ]);
+
       setStats(statsRes.data);
       setCurrentMaterials(pendingRes.data);
       setUsers(usersRes.data);
@@ -55,7 +57,7 @@ const AdminDashboard = () => {
       setSystemLogs(logsRes.data);
       setReportedMaterials(reportedRes.data);
     } catch (err) {
-      console.error("Dashboard Fetch Error:", err);
+      console.error("Dashboard Global Error:", err);
     } finally {
       setLoading(false);
     }
