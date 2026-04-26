@@ -25,8 +25,8 @@ exports.getApprovedMaterials = async (req, res) => {
         let params = [userId, userId];
 
         // Filter logic remains stable to prevent UI jumping
-        if (category && category !== 'All') {
-            query += " AND m.category = ?";
+        if (category && category !== 'All' && category !== '') {
+            query += " AND LOWER(m.category) = LOWER(?)";
             params.push(category);
         }
 
@@ -36,7 +36,7 @@ exports.getApprovedMaterials = async (req, res) => {
         }
 
         // Grouping is REQUIRED for unique aggregate functions (AVG/COUNT)
-        query += " GROUP BY m.id";
+        query += " GROUP BY m.id, u.username ORDER BY m.created_at DESC";
 
         const [materials] = await db.query(query, params);
         res.json(materials);

@@ -18,13 +18,16 @@ cloudinary.config({
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: async (req, file) => {
-    const fileExt = path.extname(file.originalname).toLowerCase(); // .pptx
-    const fileName = path.parse(file.originalname).name;
+    const fileExt = path.extname(file.originalname).toLowerCase().replace('.', '');
+    const isImage = ['jpg', 'jpeg', 'png'].includes(fileExt);
+    
     return {
       folder: 'studyshare_materials',
-      resource_type: 'raw',
-      public_id: `${fileName}-${Date.now()}`,
-      format: fileExt.replace('.', '')
+      // If it's an image, use 'image'. For PDF, DOCX, PPTX, use 'raw'
+      resource_type: isImage ? 'image' : 'raw', 
+      public_id: `${path.parse(file.originalname).name}-${Date.now()}`,
+      // ONLY set format for images. For 'raw' files, format must be undefined
+      format: isImage ? fileExt : undefined 
     };
   },
 });
@@ -32,11 +35,11 @@ const storage = new CloudinaryStorage({
 // 2. Filter file types (Remains mostly the same, but good to keep)
 const fileFilter = (req, file, cb) => {
     console.log("MIME TYPE DETECTED:", file.mimetype);
-    const fileTypes = /jpeg|jpg|png|pdf|docx|doc|pptx/;
+    const fileTypes = /jpeg|jpg|png|pdf|docx|doc|pptx|ppt/;
     const extName = fileTypes.test(path.extname(file.originalname).toLowerCase());
-    const mimeType = fileTypes.test(file.mimetype);
-    
-    if (extName || mimeType) {
+    const mimeTypes = /image\/jpeg|image\/png|application\/pdf|application\/msword|application\/vnd.openxmlformats-officedocument.wordprocessingml.document|application\/vnd.ms-powerpoint|application\/vnd.openxmlformats-officedocument.presentationml.presentation/;
+    const mimeTypeValid = mimeTypes.test(file.mimetype);
+    if (extName || mimeTypeValid) {
         cb(null, true);
     } else {
         cb(new Error("Error: Only Images, PDFs, Word and PPTX are allowed!"));

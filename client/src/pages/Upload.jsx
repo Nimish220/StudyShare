@@ -113,7 +113,7 @@ const Upload = () => {
             <p style={{ color: palette.textMuted, fontSize: '0.85rem', marginTop: '8px' }}>
               Supported: PDF, DOCX, PPTX (Max 50MB)
             </p>
-            <input type="file" id="file-input" onChange={handleFileChange} accept=".pdf,.docx,.pptx" hidden />
+            <input type="file" id="file-input" onChange={handleFileChange} accept=".pdf,.docx,.pptx,.ppt" hidden />
           </div>
 
           {/* Form Content */}

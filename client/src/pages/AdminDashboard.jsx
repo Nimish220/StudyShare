@@ -112,30 +112,16 @@ const AdminDashboard = () => {
   );
 
   const isMobile = width < 768;
-  const getFileType = (url) => {
-  if (!url) return 'Unknown';
-
-  // 1. Standard check: split by dot and get the last part
-  const parts = url.split('.');
-  const ext = parts.length > 1 ? parts.pop().toLowerCase() : '';
-
-  // 2. If standard check works (short extension)
-  if (ext && ext.length <= 4) {
-    if (['jpg', 'jpeg', 'png', 'webp'].includes(ext)) return 'IMAGE';
-    if (ext === 'pdf') return 'PDF';
-    if (['doc', 'docx'].includes(ext)) return 'WORD';
-    if (['ppt', 'pptx'].includes(ext)) return 'PPT';
-    return ext.toUpperCase();
-  }
-
-  // 3. Fallback: Search the entire URL for keywords (Case-insensitive)
+ const getFileType = (url) => {
+  if (!url) return 'FILE';
   const lowerUrl = url.toLowerCase();
-  if (lowerUrl.includes('pdf')) return 'PDF';
-  if (lowerUrl.includes('ppt') || lowerUrl.includes('powerpoint')) return 'PPT';
-  if (lowerUrl.includes('doc') || lowerUrl.includes('word')) return 'WORD';
-  if (lowerUrl.includes('png') || lowerUrl.includes('jpg') || lowerUrl.includes('jpeg')) return 'IMAGE';
+  
+  if (lowerUrl.includes('.pdf') || lowerUrl.includes('/pdf')) return 'PDF';
+  if (lowerUrl.includes('.ppt') || lowerUrl.includes('.pptx') || lowerUrl.includes('presentation')) return 'PPT';
+  if (lowerUrl.includes('.doc') || lowerUrl.includes('.docx') || lowerUrl.includes('word')) return 'WORD';
+  if (['png', 'jpg', 'jpeg'].some(ext => lowerUrl.includes(ext))) return 'IMAGE';
 
-  return 'FILE'; // Final fallback
+  return 'FILE';
 };
 
   return (
