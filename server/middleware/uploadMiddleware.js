@@ -42,13 +42,13 @@ const fileFilter = (req, file, cb) => {
     if (extName || mimeTypeValid) {
         cb(null, true);
     } else {
-        cb(new Error("Error: Only Images, PDFs, Word and PPTX are allowed!"));
+        cb(new Error("Error: Only Images, PDFs, Word and PPT/PPTX are allowed!"));
     }
 };
 
 const upload = multer({
     storage: storage,
-    limits: { fileSize: 50 * 1024 * 1024 }, // 50MB limit
+    limits: { fileSize: 15 * 1024 * 1024 }, // 15MB limit
     fileFilter: fileFilter
 });
 

@@ -21,6 +21,7 @@ const palette = {
 
 const Upload = () => {
   const [file, setFile] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [formData, setFormData] = useState({
     title: '', description: '', category: 'Computer Science', tags: ''
@@ -35,7 +36,9 @@ const Upload = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!file) return alert("Please select a file!");
-
+    
+    setIsUploading(true);
+    
     const data = new FormData();
     data.append('materialFile', file); 
     data.append('title', formData.title);
@@ -52,14 +55,19 @@ const Upload = () => {
       setFile(null);
       setFormData({ title: '', description: '', category: 'Computer Science', tags: '' });
     } catch (err) {
-      alert("Upload failed. Please try again.");
+      alert(err.response?.data?.error || "Upload failed. Check file size (Max 15MB).");
+    }
+    finally{
+      setIsUploading(false);
     }
   };
 
   return (
     <main style={{ backgroundColor: palette.bg, minHeight: '100vh', padding: '40px 0' }}>
+      <style>
+        {`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}
+      </style>
       <div style={{ maxWidth: '650px', margin: '0 auto', padding: '0 20px' }}>
-        
         <header style={{ textAlign: 'center', marginBottom: '40px' }}>
           <span style={{ color: palette.accent, fontWeight: '700', textTransform: 'uppercase', fontSize: '0.8rem', letterSpacing: '2px' }}>
             Contributor Portal
@@ -82,19 +90,20 @@ const Upload = () => {
           
           {/* Enhanced Upload Zone */}
           <div 
-            onClick={() => document.getElementById('file-input').click()}
-            onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+            onClick={() => !isUploading && document.getElementById('file-input').click()}
+            onDragOver={(e) => { e.preventDefault(); !isUploading && setIsDragging(true); }}
             onDragLeave={() => setIsDragging(false)}
-            onDrop={(e) => { e.preventDefault(); setIsDragging(false); setFile(e.dataTransfer.files[0]); }}
+            onDrop={(e) => { e.preventDefault(); setIsDragging(false); !isUploading && setFile(e.dataTransfer.files[0]); }}
             style={{ 
               border: `2px dashed ${file ? palette.success : (isDragging ? palette.accent : palette.border)}`, 
               borderRadius: '20px', 
               padding: '50px 20px', 
               textAlign: 'center',
               backgroundColor: isDragging ? palette.accentLight : (file ? '#F1F8E9' : palette.accentLight),
-              cursor: 'pointer',
+              cursor: isUploading ? 'not-allowed' : 'pointer',
               transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-              transform: isDragging ? 'scale(1.02)' : 'scale(1)'
+              transform: isDragging ? 'scale(1.02)' : 'scale(1)',
+              opacity: isUploading ? 0.6 : 1
             }}
           >
             <div style={{ 
@@ -111,9 +120,9 @@ const Upload = () => {
               {file ? file.name : "Drag & drop file or click to browse"}
             </p>
             <p style={{ color: palette.textMuted, fontSize: '0.85rem', marginTop: '8px' }}>
-              Supported: PDF, DOCX, PPTX (Max 50MB)
+              Supported: Image, PDF, DOCX, PPTX (Max 15MB)
             </p>
-            <input type="file" id="file-input" onChange={handleFileChange} accept=".pdf,.docx,.pptx,.ppt" hidden />
+            <input type="file" id="file-input" onChange={handleFileChange} accept=".pdf,.docx,.pptx,.ppt,image/*" hidden disabled={isUploading} />
           </div>
 
           {/* Form Content */}
@@ -123,9 +132,7 @@ const Upload = () => {
               <input 
                 type="text" id="title" placeholder="e.g. Data Structures - Unit 4: Trees" 
                 style={{ width: '100%', padding: '16px', borderRadius: '14px', border: `1px solid ${palette.border}`, fontSize: '16px', outline: 'none', transition: 'border-color 0.2s', boxSizing: 'border-box' }}
-                onFocus={(e) => e.target.style.borderColor = palette.accent}
-                onBlur={(e) => e.target.style.borderColor = palette.border}
-                value={formData.title} onChange={handleChange} required 
+                value={formData.title} onChange={handleChange} required disabled={isUploading}
               />
             </div>
 
@@ -134,9 +141,7 @@ const Upload = () => {
               <textarea 
                 id="description" rows="3" placeholder="Briefly highlight key topics covered..."
                 style={{ width: '100%', padding: '16px', borderRadius: '14px', border: `1px solid ${palette.border}`, fontSize: '16px', outline: 'none', resize: 'none', boxSizing: 'border-box' }}
-                onFocus={(e) => e.target.style.borderColor = palette.accent}
-                onBlur={(e) => e.target.style.borderColor = palette.border}
-                value={formData.description} onChange={handleChange}
+                value={formData.description} onChange={handleChange} disabled={isUploading}
               ></textarea>
             </div>
 
@@ -144,7 +149,7 @@ const Upload = () => {
               <div style={{ flex: '1 1 240px' }}>
                 <label style={{ display: 'block', fontWeight: '700', fontSize: '0.9rem', color: palette.textMain, marginBottom: '10px' }}>Subject Category</label>
                 <select 
-                  id="category" value={formData.category} onChange={handleChange}
+                  id="category" value={formData.category} onChange={handleChange} disabled={isUploading}
                   style={{ width: '100%', padding: '16px', borderRadius: '14px', border: `1px solid ${palette.border}`, backgroundColor: 'white', height: '56px', fontSize: '16px', cursor: 'pointer' }}
                 >
                   {uploadCategories.map(cat => <option key={cat}>{cat}</option>)}
@@ -155,9 +160,7 @@ const Upload = () => {
                 <input 
                   type="text" id="tags" placeholder="exam, midsem, formula" 
                   style={{ width: '100%', padding: '16px', borderRadius: '14px', border: `1px solid ${palette.border}`, fontSize: '16px', outline: 'none', boxSizing: 'border-box' }}
-                  onFocus={(e) => e.target.style.borderColor = palette.accent}
-                  onBlur={(e) => e.target.style.borderColor = palette.border}
-                  value={formData.tags} onChange={handleChange}
+                  value={formData.tags} onChange={handleChange} disabled={isUploading}
                 />
               </div>
             </div>
@@ -165,16 +168,25 @@ const Upload = () => {
 
           <button 
             type="submit" 
+            disabled={isUploading}
             style={{ 
-              marginTop: '40px', width: '100%', padding: '20px', backgroundColor: palette.accent, 
+              marginTop: '40px', width: '100%', padding: '20px', 
+              backgroundColor: isUploading ? palette.textMuted : palette.accent, 
               color: 'white', border: 'none', borderRadius: '18px', fontWeight: '700', 
-              fontSize: '1.1rem', cursor: 'pointer', transition: 'all 0.3s',
-              boxShadow: '0 10px 20px -5px rgba(93, 64, 55, 0.4)'
+              fontSize: '1.1rem', cursor: isUploading ? 'not-allowed' : 'pointer', transition: 'all 0.3s',
+              boxShadow: '0 10px 20px -5px rgba(93, 64, 55, 0.4)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px'
             }}
-            onMouseOver={(e) => e.currentTarget.style.backgroundColor = palette.accentHover}
-            onMouseOut={(e) => e.currentTarget.style.backgroundColor = palette.accent}
           >
-            Submit for Approval
+            {isUploading ? (
+              <>
+                <div style={{ 
+                  width: '20px', height: '20px', border: '3px solid rgba(255,255,255,0.3)', 
+                  borderTop: '3px solid white', borderRadius: '50%', animation: 'spin 0.8s linear infinite' 
+                }} />
+                Uploading...
+              </>
+            ) : "Submit for Approval"}
           </button>
         </form>
       </div>
